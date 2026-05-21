@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Jakob — Jouw feest, mijn missie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* === RESET === */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0A1A;
+            color: #FDFAF5;
+            overflow-x: hidden;
+        }
+
+        /* === DESIGN TOKENS === */
+        :root {
+            --cyan:    #00D4FF;
+            --pink:    #FF0066;
+            --orange:  #FF8C00;
+            --purple:  #9B59FF;
+            --dark:    #0A0A1A;
+            --mid:     #12122A;
+            --card:    #16162E;
+            --white:   #FDFAF5;
+            --muted:   rgba(253,250,245,0.62);
+            --border:  rgba(0,212,255,0.10);
+            --max:     1100px;
+        }
+
+        /* === NAVIGATIE === */
+        #nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 48px;
+            background: transparent;
+            transition: background 300ms ease, padding 300ms ease, border-color 300ms ease;
+            border-bottom: 1px solid transparent;
+        }
+        #nav.scrolled {
+            background: rgba(10,10,26,0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 12px 48px;
+            border-bottom-color: var(--border);
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .nav-logo img {
+            height: 46px;
+            width: 46px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(0,212,255,0.55));
+            transition: height 300ms ease, width 300ms ease, filter 300ms ease;
+        }
+        #nav.scrolled .nav-logo img { height: 34px; width: 34px; }
+        .nav-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 0.06em;
+            color: var(--cyan);
+            text-shadow: 0 0 12px rgba(0,212,255,0.4);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 36px;
+            list-style: none;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(253,250,245,0.82);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: color 200ms ease;
+        }
+        .nav-links a:hover { color: var(--cyan); }
+        .nav-cta {
+            background: var(--pink) !important;
+            color: var(--white) !important;
+            padding: 10px 22px;
+            box-shadow: 0 0 16px rgba(255,0,102,0.35);
+            transition: background 200ms ease, box-shadow 200ms ease !important;
+        }
+        .nav-cta:hover {
+            background: #cc0052 !important;
+            box-shadow: 0 0 26px rgba(255,0,102,0.6) !important;
+            color: var(--white) !important;
+        }
+
+        /* === HERO === */
+        #hero {
+            position: relative;
+            height: 100vh;
+            min-height: 620px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            padding: 0 40px;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1920&q=85');
+            background-size: cover;
+            background-position: center 35%;
+            z-index: 0;
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(10,10,26,0.82) 0%,
+                rgba(10,10,26,0.50) 45%,
+                rgba(10,10,26,0.88) 100%
+            );
+            z-index: 1;
+        }
+        .hero-glow {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 30% 70%, rgba(255,0,102,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 40%, rgba(0,212,255,0.06) 0%, transparent 60%);
+            z-index: 2;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hero-logo {
+            width: clamp(150px, 20vw, 240px);
+            height: auto;
+            margin-bottom: 32px;
+            animation: neonPulse 3.5s ease-in-out infinite alternate;
+            flex-shrink: 0;
+        }
+        @keyframes neonPulse {
+            from {
+                filter: drop-shadow(0 0 18px rgba(0,212,255,0.45))
+                        drop-shadow(0 0 36px rgba(255,0,102,0.22));
+            }
+            to {
+                filter: drop-shadow(0 0 30px rgba(0,212,255,0.72))
+                        drop-shadow(0 0 56px rgba(255,0,102,0.40));
+            }
+        }
+        .hero-headline {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(36px, 6.5vw, 84px);
+            font-weight: 400;
+            color: var(--white);
+            line-height: 1.0;
+            letter-spacing: 0.04em;
+            max-width: 860px;
+        }
+        .hero-headline em {
+            font-style: normal;
+            color: var(--cyan);
+            text-shadow: 0 0 24px rgba(0,212,255,0.35);
+        }
+        .hero-sub {
+            font-size: clamp(15px, 1.7vw, 18px);
+            font-weight: 400;
+            color: var(--muted);
+            max-width: 580px;
+            margin-top: 22px;
+            line-height: 1.7;
+        }
+        .hero-cta {
+            display: inline-block;
+            margin-top: 40px;
+            background: var(--pink);
+            color: var(--white);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            padding: 18px 54px;
+            box-shadow: 0 0 28px rgba(255,0,102,0.45), 0 4px 24px rgba(0,0,0,0.4);
+            transition: background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+        }
+        .hero-cta:hover {
+            background: #cc0052;
+            box-shadow: 0 0 40px rgba(255,0,102,0.65), 0 6px 28px rgba(0,0,0,0.5);
+            transform: translateY(-2px);
+        }
+        .scroll-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            animation: scrollBounce 2.2s ease-in-out infinite;
+        }
+        .scroll-hint span {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            opacity: 0.6;
+        }
+        .scroll-hint svg { color: var(--cyan); opacity: 0.6; }
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50%       { transform: translateX(-50%) translateY(9px); }
+        }
+
+        /* === SHARED SECTION === */
+        .label {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(30px, 4vw, 58px);
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            color: var(--white);
+            line-height: 1.05;
+        }
+        .neon-line {
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 1px;
+        }
+        .neon-line-cyan {
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+        }
+        .neon-line-pink {
+            background: linear-gradient(90deg, transparent, var(--pink), transparent);
+        }
+
+        /* === DIENSTEN === */
+        #diensten {
+            background: var(--mid);
+            padding: 96px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        .diensten-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 64px;
+        }
+        .diensten-header .section-title { margin-top: 4px; }
+        .diensten-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            max-width: var(--max);
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 20px rgba(0,212,255,0.07);
+            border-color: rgba(0,212,255,0.28);
+        }
+        /* Bruiloft card — volledige breedte, side-by-side layout */
+        .card.featured {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.82) saturate(1.15);
+            transition: filter 250ms ease;
+        }
+        .card.featured .card-img {
+            height: 100%;
+            min-height: 300px;
+        }
+        .card:hover .card-img {
+            filter: brightness(0.92) saturate(1.25);
+        }
+        .card-body {
+            padding: 28px 30px 34px;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 10px;
+        }
+        .card-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30px;
+            letter-spacing: 0.04em;
+            color: var(--white);
+            line-height: 1.1;
+        }
+        .card-desc {
+            font-size: 15px;
+            line-height: 1.68;
+            color: var(--muted);
+            margin-top: 12px;
+            flex-grow: 1;
+        }
+        .card-link {
+            display: inline-block;
+            margin-top: 22px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            text-decoration: none;
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(0,212,255,0.30);
+            transition: color 200ms ease, border-color 200ms ease;
+        }
+        .card-link:hover {
+            color: var(--pink);
+            border-color: var(--pink);
+        }
+
+        /* === CONTACT === */
+        #contact {
+            background: var(--dark);
+            padding: 96px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        #contact .bg-blob-1 {
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(255,0,102,0.055) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        #contact .bg-blob-2 {
+            position: absolute;
+            bottom: -100px; left: -80px;
+            width: 380px; height: 380px;
+            background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .contact-inner {
+            max-width: 580px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .contact-sub {
+            font-size: 17px;
+            color: var(--muted);
+            margin-top: 18px;
+            line-height: 1.68;
+        }
+        .contact-form {
+            margin-top: 52px;
+            text-align: left;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 10px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.035);
+            border: none;
+            border-bottom: 2px solid rgba(0,212,255,0.22);
+            padding: 14px 0;
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 200ms ease, background 200ms ease;
+        }
+        .form-group select {
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .form-group select option { background: #1a1a3a; color: var(--white); }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(253,250,245,0.22); }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-bottom-color: var(--cyan);
+            background: rgba(0,212,255,0.03);
+        }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-submit {
+            width: 100%;
+            background: var(--pink);
+            color: var(--white);
+            border: none;
+            padding: 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 0 24px rgba(255,0,102,0.32);
+            transition: background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+        }
+        .form-submit:hover {
+            background: #cc0052;
+            box-shadow: 0 0 36px rgba(255,0,102,0.55);
+            transform: translateY(-2px);
+        }
+        .form-submit:disabled {
+            background: var(--cyan);
+            box-shadow: 0 0 20px rgba(0,212,255,0.35);
+            cursor: default;
+            transform: none;
+        }
+
+        /* === FOOTER === */
+        footer {
+            background: #06060F;
+            border-top: 1px solid rgba(0,212,255,0.09);
+            padding: 36px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .footer-brand img {
+            height: 44px;
+            width: 44px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 6px rgba(0,212,255,0.38));
+        }
+        .footer-brand-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 0.06em;
+            color: var(--cyan);
+        }
+        .footer-socials {
+            display: flex;
+            gap: 18px;
+        }
+        .footer-socials a {
+            color: var(--cyan);
+            text-decoration: none;
+            transition: color 200ms ease, filter 200ms ease;
+            filter: drop-shadow(0 0 4px rgba(0,212,255,0.25));
+            display: flex;
+            align-items: center;
+        }
+        .footer-socials a:hover {
+            color: var(--pink);
+            filter: drop-shadow(0 0 8px rgba(255,0,102,0.45));
+        }
+        .footer-copy {
+            font-size: 12px;
+            color: rgba(253,250,245,0.28);
+        }
+
+        /* === FADE-IN === */
+        .fi {
+            opacity: 0;
+            transform: translateY(26px);
+            transition: opacity 500ms ease, transform 500ms ease;
+        }
+        .fi.on { opacity: 1; transform: none; }
+        .fi.d1 { transition-delay: 100ms; }
+        .fi.d2 { transition-delay: 200ms; }
+        .fi.d3 { transition-delay: 300ms; }
+        .fi.d4 { transition-delay: 400ms; }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 800px) {
+            #nav { padding: 16px 24px; }
+            #nav.scrolled { padding: 10px 24px; }
+            .nav-name { display: none; }
+            .nav-links { gap: 16px; }
+            .nav-links li.hide-mob { display: none; }
+            #hero { padding: 0 24px; }
+            .hero-logo { width: 140px; margin-bottom: 24px; }
+            .hero-logo svg.logo-svg { width: 140px; height: 140px; }
+            #diensten, #contact { padding: 72px 24px; }
+            .diensten-grid { grid-template-columns: 1fr; }
+            .card.featured { grid-column: 1; grid-template-columns: 1fr; }
+            .card.featured .card-img { height: 220px; min-height: unset; }
+            footer { flex-direction: column; align-items: center; text-align: center; padding: 28px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+    <a href="#" class="nav-logo">
+        <img src="./dj-jakob-logo.PNG" alt="DJ Jakob logo">
+        <span class="nav-name">DJ Jakob</span>
+    </a>
+    <ul class="nav-links">
+        <li class="hide-mob"><a href="#diensten">Diensten</a></li>
+        <li class="hide-mob"><a href="over-mij.html">Over Mij</a></li>
+        <li><a href="#contact" class="nav-cta">Boek DJ Jakob</a></li>
+    </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-glow"></div>
+
+    <div class="hero-content">
+        <img src="./dj-jakob-logo.PNG" alt="DJ Jakob" class="hero-logo">
+        <h1 class="hero-headline">
+            Van vinyl tot festival —<br><em>jouw feest, mijn missie.</em>
+        </h1>
+        <p class="hero-sub">
+            Of het nou een knallende bruiloft is, een geslaagde eindfuif of een bedrijfsfeest dat voor altijd onthouden wordt — DJ Jakob zorgt voor de muzikale rode draad van jouw avond.
+        </p>
+        <a href="#contact" class="hero-cta">Boek DJ Jakob</a>
+    </div>
+
+    <div class="scroll-hint">
+        <span>Scroll</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+        </svg>
+    </div>
+</section>
+
+<!-- DIENSTEN -->
+<section id="diensten">
+    <div class="neon-line neon-line-cyan"></div>
+
+    <div class="diensten-header">
+        <span class="label fi">Wat ik voor je doe</span>
+        <h2 class="section-title fi d1">Elk feest verdient<br>de juiste soundtrack</h2>
+    </div>
+
+    <div class="diensten-grid">
+
+        <!-- BRUILOFT — featured -->
+        <div class="card featured fi">
+            <img
+                src="https://images.unsplash.com/photo-1519741497674-611481863552?w=900&q=80"
+                alt="Bruiloft DJ" class="card-img">
+            <div class="card-body">
+                <span class="card-tag">⭐ Meest gevraagd</span>
+                <h3 class="card-name">Bruiloft</h3>
+                <p class="card-desc">
+                    Van de eerste dans tot de laatste man op de dansvloer. DJ Jakob leest de zaal, past de mix aan op elk moment van de avond en zorgt dat jouw trouwdag klinkt zoals je hem hebt gedroomd. Geen setlist in beton — pure feeling.
+                </p>
+                <a href="#contact" class="card-link">Plan je bruiloft →</a>
+            </div>
+        </div>
+
+        <!-- 40-JARIG -->
+        <div class="card fi d1">
+            <img
+                src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80"
+                alt="40-jarig feest" class="card-img">
+            <div class="card-body">
+                <span class="card-tag">Jubileum</span>
+                <h3 class="card-name">40-jarig feest</h3>
+                <p class="card-desc">
+                    Veertig jaar vieren doe je maar één keer. Een mix die de mooiste jaren oproept én de dansvloer vult tot het licht aangaat.
+                </p>
+                <a href="#contact" class="card-link">Vraag een offerte →</a>
+            </div>
+        </div>
+
+        <!-- 50-JARIG -->
+        <div class="card fi d2">
+            <img
+                src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80"
+                alt="50-jarig feest" class="card-img">
+            <div class="card-body">
+                <span class="card-tag">Jubileum</span>
+                <h3 class="card-name">50-jarig feest</h3>
+                <p class="card-desc">
+                    Een halve eeuw verdient een onvergetelijk feest. Van nostalgische hits tot eigentijdse bangers — voor elke generatie op de dansvloer iets.
+                </p>
+                <a href="#contact" class="card-link">Vraag een offerte →</a>
+            </div>
+        </div>
+
+        <!-- EINDFUIF -->
+        <div class="card fi d1">
+            <img
+                src="https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800&q=80"
+                alt="Eindfuif" class="card-img">
+            <div class="card-body">
+                <span class="card-tag">School &amp; Studie</span>
+                <h3 class="card-name">Eindfuif</h3>
+                <p class="card-desc">
+                    Eindexamen gehaald — nu is het tijd om te vieren. Een energieke set die de hele nacht doorloopt.
+                </p>
+                <a href="#contact" class="card-link">Boek je eindfuif →</a>
+            </div>
+        </div>
+
+        <!-- BEDRIJFSFEEST -->
+        <div class="card fi d2">
+            <img
+                src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80"
+                alt="Bedrijfsfeest" class="card-img">
+            <div class="card-body">
+                <span class="card-tag">Corporate</span>
+                <h3 class="card-name">Bedrijfsfeest</h3>
+                <p class="card-desc">
+                    Een bedrijfsfeest dat voor altijd onthouden wordt. DJ Jakob stemt de sfeer af op jouw team en de avond die je voor ogen hebt.
+                </p>
+                <a href="#contact" class="card-link">Bespreek de mogelijkheden →</a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+    <div class="neon-line neon-line-pink"></div>
+    <div class="bg-blob-1"></div>
+    <div class="bg-blob-2"></div>
+
+    <div class="contact-inner">
+        <span class="label fi">Jouw avond begint hier</span>
+        <h2 class="section-title fi d1">Boek DJ Jakob</h2>
+        <p class="contact-sub fi d2">
+            Vertel me over jouw avond en ik kom met een voorstel op maat. Geen vaste pakketten — gewoon een eerlijk gesprek over wat jij wilt.
+        </p>
+
+        <form class="contact-form fi d3" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="naam">Naam</label>
+                <input type="text" id="naam" name="naam" placeholder="Jouw naam" required>
+            </div>
+            <div class="form-group">
+                <label for="email">E-mailadres</label>
+                <input type="email" id="email" name="email" placeholder="jouw@email.nl" required>
+            </div>
+            <div class="form-group">
+                <label for="soort">Soort feest</label>
+                <select id="soort" name="soort" required>
+                    <option value="" disabled selected>Kies een type feest</option>
+                    <option>Bruiloft</option>
+                    <option>40-jarig feest</option>
+                    <option>50-jarig feest</option>
+                    <option>Eindfuif</option>
+                    <option>Bedrijfsfeest</option>
+                    <option>Anders</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="datum">Datum (optioneel)</label>
+                <input type="date" id="datum" name="datum">
+            </div>
+            <div class="form-group">
+                <label for="bericht">Vertel me over jouw avond</label>
+                <textarea id="bericht" name="bericht" placeholder="Locatie, verwacht aantal gasten, sfeer die je zoekt..."></textarea>
+            </div>
+            <button type="submit" class="form-submit" id="submit-btn">Stuur je aanvraag</button>
+        </form>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-brand">
+        <img src="./dj-jakob-logo.PNG" alt="DJ Jakob">
+        <span class="footer-brand-name">DJ Jakob</span>
+    </div>
+    <div class="footer-socials">
+        <!-- Instagram -->
+        <a href="#" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+        </a>
+        <!-- Facebook -->
+        <a href="#" aria-label="Facebook">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+        </a>
+        <!-- Spotify -->
+        <a href="#" aria-label="Spotify">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 13.5c2.5-1 5.5-1 8 0M7 10.5c3-1.2 7-1.2 10 0M9 16.5c2-0.8 4-0.8 6 0"/>
+            </svg>
+        </a>
+    </div>
+    <p class="footer-copy">© 2026 DJ Jakob — Est. '76. Alle rechten voorbehouden.</p>
+</footer>
+
+<script>
+    // Nav: transparant → donker na 80px scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 80);
+    }, { passive: true });
+
+    // Fade-in bij scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+    }, { threshold: 0.10 });
+    document.querySelectorAll('.fi').forEach(el => observer.observe(el));
+
+    // Formulier submit
+    function handleSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        btn.textContent = '✓ Aanvraag verzonden — ik neem snel contact op!';
+        btn.disabled = true;
+    }
+</script>
+
+</body>
+</html>
