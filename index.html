@@ -689,7 +689,7 @@
             Vertel me over jouw avond en ik kom met een voorstel op maat. Geen vaste pakketten — gewoon een eerlijk gesprek over wat jij wilt.
         </p>
 
-        <form class="contact-form fi d3" onsubmit="handleSubmit(event)">
+        <form class="contact-form fi d3" action="https://formspree.io/f/xjgzwqwp" method="POST">
             <div class="form-group">
                 <label for="naam">Naam</label>
                 <input type="text" id="naam" name="naam" placeholder="Jouw naam" required>
@@ -770,10 +770,7 @@
 
     // Formulier submit
     function handleSubmit(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submit-btn');
-        btn.textContent = '✓ Aanvraag verzonden — ik neem snel contact op!';
-        btn.disabled = true;
+        // Formspree handles submission natively via method="POST"
     }
 </script>
 
