@@ -52,17 +52,15 @@
             text-decoration: none;
         }
         .nav-logo img {
-            height: 40px;
-            width: 40px;
+            height: 54px;
+            width: 54px;
             object-fit: contain;
-            filter: drop-shadow(0 0 6px rgba(0,212,255,0.5));
+            border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.5))
+                    drop-shadow(0 0 14px rgba(0,212,255,0.35));
+            transition: height 300ms ease, width 300ms ease;
         }
-        .nav-name {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 20px;
-            letter-spacing: 0.06em;
-            color: var(--cyan);
-        }
+        .nav-name { display: none; }
         .nav-links {
             display: flex;
             align-items: center;
@@ -479,10 +477,12 @@
             gap: 12px;
         }
         .footer-brand img {
-            height: 44px;
-            width: 44px;
+            height: 52px;
+            width: 52px;
             object-fit: contain;
-            filter: drop-shadow(0 0 6px rgba(0,212,255,0.38));
+            border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.45))
+                    drop-shadow(0 0 14px rgba(0,212,255,0.30));
         }
         .footer-brand-name {
             font-family: 'Bebas Neue', sans-serif;
@@ -542,7 +542,7 @@
 <!-- NAV -->
 <nav id="nav">
     <a href="index.html" class="nav-logo">
-        <img src="./dj-jakob-logo.PNG" alt="DJ Jakob logo">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob logo">
         <span class="nav-name">DJ Jakob</span>
     </a>
     <ul class="nav-links">
@@ -672,7 +672,7 @@
 <!-- FOOTER -->
 <footer>
     <div class="footer-brand">
-        <img src="./dj-jakob-logo.PNG" alt="DJ Jakob">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
         <span class="footer-brand-name">DJ Jakob</span>
     </div>
     <div class="footer-socials">
