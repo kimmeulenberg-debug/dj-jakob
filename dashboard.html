@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Dashboard — Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; min-height: 100vh; }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --green:  #00E676;
+            --orange: #FF8C00;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.55);
+            --border: rgba(0,212,255,0.12);
+        }
+
+        /* ===================== PIN SCREEN ===================== */
+        #pin-screen {
+            position: fixed; inset: 0; z-index: 999;
+            background: var(--dark);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 0;
+        }
+        .pin-logo {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 12px rgba(255,140,0,0.6)) drop-shadow(0 0 20px rgba(0,212,255,0.4));
+            margin-bottom: 20px;
+        }
+        .pin-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30px; letter-spacing: 0.06em; color: var(--cyan);
+        }
+        .pin-sub {
+            font-size: 13px; color: var(--muted);
+            margin-top: 6px; margin-bottom: 32px;
+        }
+        .pin-dots {
+            display: flex; gap: 14px; margin-bottom: 12px;
+        }
+        .pin-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(0,212,255,0.4);
+            background: transparent;
+            transition: background 150ms ease, border-color 150ms ease;
+        }
+        .pin-dot.filled {
+            background: var(--cyan);
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0,212,255,0.6);
+        }
+        .pin-error {
+            height: 18px;
+            font-size: 12px; color: var(--pink);
+            margin-bottom: 28px;
+            transition: opacity 200ms ease;
+        }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 72px);
+            gap: 12px;
+        }
+        .numpad-btn {
+            height: 72px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 22px; font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 150ms ease, border-color 150ms ease;
+        }
+        .numpad-btn:hover { background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3); }
+        .numpad-btn:active { background: rgba(0,212,255,0.15); }
+        .numpad-btn.del { font-size: 18px; color: var(--muted); }
+        .numpad-btn.empty { visibility: hidden; }
+
+        /* ===================== DASHBOARD ===================== */
+        #dashboard { display: none; }
+
+        .dash-header {
+            background: rgba(10,10,26,0.97);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+            backdrop-filter: blur(12px);
+        }
+        .dash-brand {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .dash-brand img {
+            width: 44px; height: 44px; border-radius: 50%; object-fit: contain;
+            filter: drop-shadow(0 0 6px rgba(255,140,0,0.4));
+        }
+        .dash-brand-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px; letter-spacing: 0.06em; color: var(--cyan);
+        }
+        .dash-counter {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: var(--muted);
+        }
+        .counter-badge {
+            background: var(--pink);
+            color: var(--white);
+            font-size: 13px; font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            box-shadow: 0 0 12px rgba(255,0,102,0.4);
+            min-width: 32px; text-align: center;
+        }
+        .counter-badge.zero { background: rgba(255,255,255,0.1); box-shadow: none; }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--muted);
+            padding: 8px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; cursor: pointer;
+            border-radius: 4px;
+            transition: border-color 200ms, color 200ms;
+        }
+        .btn-logout:hover { border-color: var(--pink); color: var(--pink); }
+
+        .dash-body { padding: 32px; max-width: 900px; margin: 0 auto; }
+
+        /* TABS */
+        .tabs {
+            display: flex; gap: 8px; margin-bottom: 28px;
+        }
+        .tab-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px; font-weight: 600;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            cursor: pointer; border-radius: 4px;
+            transition: all 200ms ease;
+        }
+        .tab-btn:hover { border-color: rgba(0,212,255,0.25); color: var(--white); }
+        .tab-btn.active {
+            background: rgba(0,212,255,0.10);
+            border-color: rgba(0,212,255,0.40);
+            color: var(--cyan);
+        }
+        .tab-count {
+            background: rgba(255,255,255,0.10);
+            color: var(--white);
+            font-size: 11px; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px;
+            min-width: 22px; text-align: center;
+        }
+        .tab-btn.active .tab-count { background: rgba(0,212,255,0.25); color: var(--cyan); }
+
+        /* REQUEST LIST */
+        #request-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .req-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 20px 24px;
+            border-radius: 4px;
+            transition: border-color 200ms ease;
+        }
+        .req-card:hover { border-color: rgba(0,212,255,0.22); }
+
+        .req-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .req-naam {
+            font-size: 13px; font-weight: 700;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--cyan);
+        }
+        .req-time {
+            font-size: 11px; color: var(--muted);
+        }
+        .req-song {
+            display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+        }
+        .req-liedje {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px; letter-spacing: 0.04em; color: var(--white);
+            line-height: 1.1;
+        }
+        .req-artiest {
+            font-size: 15px; color: var(--muted);
+        }
+        .req-bericht {
+            font-size: 13px; color: var(--muted);
+            margin-top: 10px; line-height: 1.6;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.03);
+            border-left: 2px solid rgba(0,212,255,0.25);
+            font-style: italic;
+        }
+        .req-actions {
+            display: flex; gap: 10px; margin-top: 16px;
+        }
+        .btn-gespeeld, .btn-overgeslagen {
+            padding: 9px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            transition: all 200ms ease;
+        }
+        .btn-gespeeld {
+            background: rgba(0,230,118,0.12);
+            border: 1px solid rgba(0,230,118,0.35);
+            color: #00E676;
+        }
+        .btn-gespeeld:hover {
+            background: rgba(0,230,118,0.22);
+            border-color: rgba(0,230,118,0.6);
+            box-shadow: 0 0 12px rgba(0,230,118,0.2);
+        }
+        .btn-overgeslagen {
+            background: rgba(255,0,102,0.08);
+            border: 1px solid rgba(255,0,102,0.25);
+            color: var(--pink);
+        }
+        .btn-overgeslagen:hover {
+            background: rgba(255,0,102,0.16);
+            border-color: rgba(255,0,102,0.5);
+            box-shadow: 0 0 12px rgba(255,0,102,0.15);
+        }
+
+        /* STATUS BADGES */
+        .status-badge {
+            display: inline-block;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 3px 10px; border-radius: 10px;
+            margin-top: 14px;
+        }
+        .status-gespeeld {
+            background: rgba(0,230,118,0.12);
+            color: #00E676;
+            border: 1px solid rgba(0,230,118,0.3);
+        }
+        .status-overgeslagen {
+            background: rgba(255,0,102,0.08);
+            color: var(--pink);
+            border: 1px solid rgba(255,0,102,0.25);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center; padding: 64px 32px;
+            color: var(--muted); font-size: 15px;
+        }
+        .empty-icon { font-size: 40px; margin-bottom: 16px; }
+        .empty-text { color: var(--muted); }
+
+        /* LOADING */
+        .loading-state {
+            text-align: center; padding: 48px;
+            color: var(--muted); font-size: 14px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .dash-header { padding: 14px 20px; }
+            .dash-body { padding: 20px 16px; }
+            .tabs { flex-wrap: wrap; }
+            .numpad { grid-template-columns: repeat(3, 64px); gap: 10px; }
+            .numpad-btn { height: 64px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+    <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="pin-logo">
+    <h1 class="pin-title">DJ Dashboard</h1>
+    <p class="pin-sub">Voer je pincode in</p>
+
+    <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <p class="pin-error" id="pin-error">&nbsp;</p>
+
+    <div class="numpad">
+        <button class="numpad-btn" onclick="addDigit('1')">1</button>
+        <button class="numpad-btn" onclick="addDigit('2')">2</button>
+        <button class="numpad-btn" onclick="addDigit('3')">3</button>
+        <button class="numpad-btn" onclick="addDigit('4')">4</button>
+        <button class="numpad-btn" onclick="addDigit('5')">5</button>
+        <button class="numpad-btn" onclick="addDigit('6')">6</button>
+        <button class="numpad-btn" onclick="addDigit('7')">7</button>
+        <button class="numpad-btn" onclick="addDigit('8')">8</button>
+        <button class="numpad-btn" onclick="addDigit('9')">9</button>
+        <button class="numpad-btn empty"></button>
+        <button class="numpad-btn" onclick="addDigit('0')">0</button>
+        <button class="numpad-btn del" onclick="deleteDigit()">⌫</button>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <header class="dash-header">
+        <div class="dash-brand">
+            <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
+            <span class="dash-brand-title">DJ Dashboard</span>
+        </div>
+        <div class="dash-counter">
+            <span>Wachtend:</span>
+            <span class="counter-badge zero" id="wacht-badge">0</span>
+        </div>
+        <button class="btn-logout" onclick="logout()">Uitloggen</button>
+    </header>
+
+    <div class="dash-body">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="wachtend" onclick="setTab('wachtend')">
+                Wachtend <span class="tab-count" id="cnt-wachtend">0</span>
+            </button>
+            <button class="tab-btn" data-tab="gespeeld" onclick="setTab('gespeeld')">
+                Gespeeld <span class="tab-count" id="cnt-gespeeld">0</span>
+            </button>
+            <button class="tab-btn" data-tab="overgeslagen" onclick="setTab('overgeslagen')">
+                Overgeslagen <span class="tab-count" id="cnt-overgeslagen">0</span>
+            </button>
+        </div>
+
+        <div id="request-list">
+            <div class="loading-state">Laden...</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // ============================================================
+    // CONFIGURATIE — wijzig de pincode hier
+    // ============================================================
+    const PIN = '1976';
+
+    const SUPABASE_URL = 'https://zweumhnigwyjfjuowzts.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ';
+
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================================
+    // PIN LOGIC
+    // ============================================================
+    let enteredPin = '';
+
+    // Herstel sessie als al ingelogd
+    if (sessionStorage.getItem('dj-auth') === 'ok') showDashboard();
+
+    function addDigit(d) {
+        if (enteredPin.length >= 4) return;
+        enteredPin += d;
+        updateDots();
+        if (enteredPin.length === 4) setTimeout(checkPin, 80);
+    }
+
+    function deleteDigit() {
+        enteredPin = enteredPin.slice(0, -1);
+        updateDots();
+    }
+
+    function updateDots() {
+        for (let i = 0; i < 4; i++) {
+            document.getElementById('dot-' + i).classList.toggle('filled', i < enteredPin.length);
+        }
+    }
+
+    function checkPin() {
+        if (enteredPin === PIN) {
+            sessionStorage.setItem('dj-auth', 'ok');
+            showDashboard();
+        } else {
+            const err = document.getElementById('pin-error');
+            err.textContent = 'Onjuiste pincode — probeer opnieuw';
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('dot-' + i).style.background = 'rgba(255,0,102,0.7)';
+            }
+            setTimeout(() => {
+                enteredPin = '';
+                updateDots();
+                err.textContent = ' ';
+                for (let i = 0; i < 4; i++) {
+                    document.getElementById('dot-' + i).style.background = '';
+                }
+            }, 1000);
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById('pin-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadRequests();
+        subscribeRealtime();
+    }
+
+    function logout() {
+        sessionStorage.removeItem('dj-auth');
+        location.reload();
+    }
+
+    // ============================================================
+    // DASHBOARD LOGIC
+    // ============================================================
+    let allRequests = [];
+    let currentTab  = 'wachtend';
+
+    async function loadRequests() {
+        const { data, error } = await db
+            .from('requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) { console.error(error); return; }
+        allRequests = data || [];
+        render();
+    }
+
+    function render() {
+        const wachtend     = allRequests.filter(r => r.status === 'wachtend');
+        const gespeeld     = allRequests.filter(r => r.status === 'gespeeld');
+        const overgeslagen = allRequests.filter(r => r.status === 'overgeslagen');
+
+        // Counts
+        document.getElementById('cnt-wachtend').textContent     = wachtend.length;
+        document.getElementById('cnt-gespeeld').textContent     = gespeeld.length;
+        document.getElementById('cnt-overgeslagen').textContent = overgeslagen.length;
+
+        const badge = document.getElementById('wacht-badge');
+        badge.textContent = wachtend.length;
+        badge.className = 'counter-badge' + (wachtend.length === 0 ? ' zero' : '');
+
+        // Render current tab
+        const list = currentTab === 'wachtend' ? wachtend
+                   : currentTab === 'gespeeld'  ? gespeeld
+                   : overgeslagen;
+
+        const el = document.getElementById('request-list');
+
+        if (list.length === 0) {
+            const icons = { wachtend: '🎵', gespeeld: '✅', overgeslagen: '⏭' };
+            const texts = {
+                wachtend:     'Nog geen verzoeken. Ze komen eraan!',
+                gespeeld:     'Nog geen nummers gespeeld.',
+                overgeslagen: 'Nog niets overgeslagen.'
+            };
+            el.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">${icons[currentTab]}</div>
+                    <p class="empty-text">${texts[currentTab]}</p>
+                </div>`;
+            return;
+        }
+
+        el.innerHTML = list.map(r => `
+            <div class="req-card" id="req-${r.id}">
+                <div class="req-top">
+                    <span class="req-naam">${escHtml(r.naam)}</span>
+                    <span class="req-time">${formatTime(r.created_at)}</span>
+                </div>
+                <div class="req-song">
+                    <span class="req-liedje">${escHtml(r.liedje)}</span>
+                    ${r.artiest ? `<span class="req-artiest">— ${escHtml(r.artiest)}</span>` : ''}
+                </div>
+                ${r.bericht ? `<p class="req-bericht">"${escHtml(r.bericht)}"</p>` : ''}
+                ${r.status === 'wachtend' ? `
+                    <div class="req-actions">
+                        <button class="btn-gespeeld"     onclick="updateStatus('${r.id}','gespeeld')">✓ Gespeeld</button>
+                        <button class="btn-overgeslagen" onclick="updateStatus('${r.id}','overgeslagen')">✗ Overgeslagen</button>
+                    </div>` : `
+                    <div>
+                        <span class="status-badge status-${r.status}">
+                            ${r.status === 'gespeeld' ? '✓ Gespeeld' : '✗ Overgeslagen'}
+                        </span>
+                    </div>`
+                }
+            </div>
+        `).join('');
+    }
+
+    async function updateStatus(id, status) {
+        const { error } = await db.from('requests').update({ status }).eq('id', id);
+        if (error) { console.error(error); return; }
+        allRequests = allRequests.map(r => r.id === id ? { ...r, status } : r);
+        render();
+    }
+
+    function setTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        render();
+    }
+
+    function subscribeRealtime() {
+        db.channel('requests-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
+                loadRequests();
+            })
+            .subscribe();
+    }
+
+    function formatTime(ts) {
+        return new Date(ts).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verzoek een nummer — DJ Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; overflow-x: hidden; }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --orange: #FF8C00;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.62);
+            --border: rgba(0,212,255,0.10);
+        }
+
+        /* NAV */
+        #nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 48px;
+            background: transparent;
+            transition: background 300ms ease, padding 300ms ease, border-color 300ms ease;
+            border-bottom: 1px solid transparent;
+        }
+        #nav.scrolled {
+            background: rgba(10,10,26,0.94);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            padding: 12px 48px;
+            border-bottom-color: var(--border);
+        }
+        .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo img {
+            height: 54px; width: 54px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.5)) drop-shadow(0 0 14px rgba(0,212,255,0.35));
+            transition: height 300ms ease, width 300ms ease;
+        }
+        #nav.scrolled .nav-logo img { height: 40px; width: 40px; }
+        .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+        .nav-links a {
+            text-decoration: none; color: rgba(253,250,245,0.82);
+            font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            transition: color 200ms ease;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+        .nav-cta {
+            background: var(--pink) !important; color: var(--white) !important;
+            padding: 10px 22px;
+            box-shadow: 0 0 16px rgba(255,0,102,0.35);
+            transition: background 200ms ease, box-shadow 200ms ease !important;
+        }
+        .nav-cta:hover { background: #cc0052 !important; box-shadow: 0 0 26px rgba(255,0,102,0.6) !important; }
+
+        /* PAGE HEADER */
+        #page-header {
+            background: var(--mid);
+            padding: 140px 48px 72px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        #page-header::before {
+            content: '';
+            position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+        }
+        .page-header-bg {
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .page-label {
+            display: inline-block; font-size: 11px; font-weight: 700;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--cyan); margin-bottom: 14px;
+        }
+        .page-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(36px, 5vw, 64px);
+            letter-spacing: 0.04em; color: var(--white); line-height: 1.05;
+            position: relative;
+        }
+        .page-sub {
+            font-size: 17px; color: var(--muted); margin-top: 16px;
+            line-height: 1.7; position: relative;
+        }
+
+        /* FORM SECTION */
+        #verzoek-section {
+            background: var(--dark);
+            padding: 72px 48px 96px;
+        }
+        .verzoek-inner {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+        .form-group {
+            display: flex; flex-direction: column; margin-bottom: 28px;
+        }
+        .form-group label {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: var(--cyan); margin-bottom: 10px;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.035);
+            border: none; border-bottom: 2px solid rgba(0,212,255,0.22);
+            padding: 14px 0;
+            color: var(--white); font-family: 'Inter', sans-serif; font-size: 16px;
+            outline: none;
+            transition: border-color 200ms ease, background 200ms ease;
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(253,250,245,0.22); }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-bottom-color: var(--cyan);
+            background: rgba(0,212,255,0.03);
+        }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-submit {
+            width: 100%; background: var(--cyan); color: var(--dark);
+            border: none; padding: 18px;
+            font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+            letter-spacing: 0.10em; text-transform: uppercase;
+            cursor: pointer; margin-top: 8px;
+            box-shadow: 0 0 24px rgba(0,212,255,0.32);
+            transition: background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+        }
+        .form-submit:hover {
+            background: #00bce0;
+            box-shadow: 0 0 36px rgba(0,212,255,0.55);
+            transform: translateY(-2px);
+        }
+        .form-submit:disabled {
+            background: rgba(0,212,255,0.4);
+            box-shadow: none; cursor: default; transform: none;
+        }
+
+        /* SUCCESS */
+        .success-box {
+            display: none; text-align: center;
+            padding: 56px 32px;
+        }
+        .success-icon { font-size: 56px; margin-bottom: 20px; }
+        .success-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 42px; letter-spacing: 0.04em;
+            color: var(--cyan);
+        }
+        .success-text {
+            color: var(--muted); font-size: 16px; line-height: 1.7;
+            margin-top: 14px; max-width: 400px; margin-left: auto; margin-right: auto;
+        }
+        .btn-again {
+            display: inline-block; margin-top: 36px;
+            background: transparent; color: var(--cyan);
+            border: 1px solid rgba(0,212,255,0.4);
+            padding: 14px 40px;
+            font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 200ms ease, color 200ms ease, background 200ms ease;
+        }
+        .btn-again:hover {
+            border-color: var(--cyan);
+            background: rgba(0,212,255,0.06);
+        }
+
+        /* ERROR */
+        .form-error {
+            display: none; color: var(--pink); font-size: 13px;
+            margin-top: 12px; text-align: center;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #06060F;
+            border-top: 1px solid rgba(0,212,255,0.09);
+            padding: 36px 48px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 20px;
+        }
+        .footer-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .footer-brand img {
+            height: 52px; width: 52px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.45)) drop-shadow(0 0 14px rgba(0,212,255,0.30));
+        }
+        .footer-brand-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px; letter-spacing: 0.06em; color: var(--cyan);
+        }
+        .footer-socials { display: flex; gap: 18px; }
+        .footer-socials a {
+            color: var(--cyan); text-decoration: none;
+            filter: drop-shadow(0 0 4px rgba(0,212,255,0.25));
+            display: flex; align-items: center;
+            transition: color 200ms ease, filter 200ms ease;
+        }
+        .footer-socials a:hover { color: var(--pink); filter: drop-shadow(0 0 8px rgba(255,0,102,0.45)); }
+        .footer-copy { font-size: 12px; color: rgba(253,250,245,0.28); }
+
+        /* FADE-IN */
+        .fi { opacity: 0; transform: translateY(26px); transition: opacity 500ms ease, transform 500ms ease; }
+        .fi.on { opacity: 1; transform: none; }
+        .fi.d1 { transition-delay: 100ms; }
+        .fi.d2 { transition-delay: 200ms; }
+        .fi.d3 { transition-delay: 300ms; }
+        .fi.d4 { transition-delay: 400ms; }
+
+        /* RESPONSIVE */
+        @media (max-width: 800px) {
+            #nav { padding: 16px 24px; }
+            #nav.scrolled { padding: 10px 24px; }
+            .nav-links { gap: 16px; }
+            .nav-links li.hide-mob { display: none; }
+            #page-header { padding: 110px 24px 56px; }
+            #verzoek-section { padding: 56px 24px 80px; }
+            footer { flex-direction: column; align-items: center; text-align: center; padding: 28px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+    <a href="index.html" class="nav-logo">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob logo">
+    </a>
+    <ul class="nav-links">
+        <li class="hide-mob"><a href="index.html#diensten">Diensten</a></li>
+        <li class="hide-mob"><a href="over-mij.html">Over Mij</a></li>
+        <li class="hide-mob"><a href="verzoek.html" class="active">Verzoek een nummer</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Boek DJ Jakob</a></li>
+    </ul>
+</nav>
+
+<!-- PAGE HEADER -->
+<section id="page-header">
+    <div class="page-header-bg"></div>
+    <p class="page-label fi">Live op het feest</p>
+    <h1 class="page-title fi d1">Vraag een nummer aan</h1>
+    <p class="page-sub fi d2">De DJ doet zijn best om jouw verzoek te draaien 🎧</p>
+</section>
+
+<!-- VERZOEK FORMULIER -->
+<section id="verzoek-section">
+    <div class="verzoek-inner">
+
+        <form id="verzoek-form">
+            <div class="form-group fi">
+                <label for="naam">Jouw naam</label>
+                <input type="text" id="naam" placeholder="bijv. Sophie" required>
+            </div>
+            <div class="form-group fi d1">
+                <label for="artiest">Artiest <span style="opacity:.45; font-weight:400; text-transform:none; letter-spacing:0;">(optioneel)</span></label>
+                <input type="text" id="artiest" placeholder="bijv. ABBA">
+            </div>
+            <div class="form-group fi d2">
+                <label for="liedje">Liedje</label>
+                <input type="text" id="liedje" placeholder="bijv. Dancing Queen" required>
+            </div>
+            <div class="form-group fi d3">
+                <label for="bericht">Bericht <span style="opacity:.45; font-weight:400; text-transform:none; letter-spacing:0;">(optioneel)</span></label>
+                <textarea id="bericht" placeholder="bijv. voor mijn moeder op haar 50ste — ze droomt hiervan!"></textarea>
+            </div>
+            <button type="submit" class="form-submit fi d4" id="submit-btn">🎵 Stuur je verzoek</button>
+            <p class="form-error" id="form-error">Er ging iets mis. Probeer het opnieuw.</p>
+        </form>
+
+        <div class="success-box" id="success-box">
+            <div class="success-icon">🎧</div>
+            <h2 class="success-title">Verzoek ontvangen!</h2>
+            <p class="success-text">
+                DJ Jakob heeft je verzoek gekregen en doet zijn best om het te draaien. Geniet van het feest!
+            </p>
+            <button class="btn-again" id="btn-again">Nog een verzoek</button>
+        </div>
+
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <a href="index.html" class="footer-brand">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
+        <span class="footer-brand-name">DJ Jakob</span>
+    </a>
+    <div class="footer-socials">
+        <a href="#" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+        </a>
+        <a href="#" aria-label="Facebook">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+        </a>
+        <a href="#" aria-label="Spotify">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 13.5c2.5-1 5.5-1 8 0M7 10.5c3-1.2 7-1.2 10 0M9 16.5c2-0.8 4-0.8 6 0"/>
+            </svg>
+        </a>
+    </div>
+    <p class="footer-copy">© 2026 DJ Jakob — Est. '76. Alle rechten voorbehouden.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const { createClient } = supabase;
+    const db = createClient(
+        'https://zweumhnigwyjfjuowzts.supabase.co',
+        'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ'
+    );
+
+    const form       = document.getElementById('verzoek-form');
+    const successBox = document.getElementById('success-box');
+    const submitBtn  = document.getElementById('submit-btn');
+    const formError  = document.getElementById('form-error');
+    const btnAgain   = document.getElementById('btn-again');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formError.style.display = 'none';
+        submitBtn.textContent = 'Versturen...';
+        submitBtn.disabled = true;
+
+        const naam    = document.getElementById('naam').value.trim();
+        const artiest = document.getElementById('artiest').value.trim() || null;
+        const liedje  = document.getElementById('liedje').value.trim();
+        const bericht = document.getElementById('bericht').value.trim() || null;
+
+        const { error } = await db.from('requests').insert({ naam, artiest, liedje, bericht });
+
+        if (error) {
+            console.error(error);
+            formError.style.display = 'block';
+            submitBtn.textContent = '🎵 Stuur je verzoek';
+            submitBtn.disabled = false;
+            return;
+        }
+
+        form.style.display = 'none';
+        successBox.style.display = 'block';
+    });
+
+    btnAgain.addEventListener('click', () => {
+        form.reset();
+        form.style.display = 'block';
+        successBox.style.display = 'none';
+        submitBtn.textContent = '🎵 Stuur je verzoek';
+        submitBtn.disabled = false;
+    });
+
+    // Nav scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 80);
+    }, { passive: true });
+
+    // Fade-in
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+    }, { threshold: 0.10 });
+    document.querySelectorAll('.fi').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
