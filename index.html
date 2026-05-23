@@ -518,6 +518,70 @@
             color: rgba(253,250,245,0.28);
         }
 
+        /* === LIVE SECTIE === */
+        #live {
+            background: var(--dark);
+            padding: 96px 48px;
+            position: relative;
+        }
+        #live::before {
+            content: '';
+            position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+        }
+        .live-header {
+            text-align: center; max-width: 600px; margin: 0 auto 52px;
+        }
+        .live-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 18px; max-width: var(--max); margin: 0 auto;
+        }
+        .live-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 40px 36px;
+            display: flex; flex-direction: column;
+            text-decoration: none;
+            transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+        }
+        .live-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+            border-color: rgba(0,212,255,0.3);
+        }
+        .live-card-icon {
+            font-size: 40px; margin-bottom: 20px;
+        }
+        .live-card-tag {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: var(--cyan); margin-bottom: 10px;
+        }
+        .live-card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 32px; letter-spacing: 0.04em;
+            color: var(--white); line-height: 1.1;
+        }
+        .live-card-desc {
+            font-size: 15px; line-height: 1.68;
+            color: var(--muted); margin-top: 12px; flex-grow: 1;
+        }
+        .live-card-cta {
+            display: inline-block; margin-top: 24px;
+            font-size: 12px; font-weight: 700;
+            letter-spacing: 0.10em; text-transform: uppercase;
+            color: var(--cyan);
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(0,212,255,0.30);
+            transition: color 200ms ease, border-color 200ms ease;
+        }
+        .live-card:hover .live-card-cta { color: var(--pink); border-color: var(--pink); }
+        .live-card.dashboard-card { border-color: rgba(255,0,102,0.15); }
+        .live-card.dashboard-card:hover { border-color: rgba(255,0,102,0.35); }
+        .live-card.dashboard-card .live-card-tag { color: var(--pink); }
+        .live-card.dashboard-card .live-card-cta { color: var(--pink); border-color: rgba(255,0,102,0.30); }
+        .live-card.dashboard-card:hover .live-card-cta { color: var(--cyan); border-color: var(--cyan); }
+
         /* === FADE-IN === */
         .fi {
             opacity: 0;
@@ -542,6 +606,7 @@
             .hero-logo svg.logo-svg { width: 140px; height: 140px; }
             #diensten, #contact { padding: 72px 24px; }
             .diensten-grid { grid-template-columns: 1fr; }
+            .live-grid { grid-template-columns: 1fr; }
             .card.featured { grid-column: 1; grid-template-columns: 1fr; }
             .card.featured .card-img { height: 220px; min-height: unset; }
             footer { flex-direction: column; align-items: center; text-align: center; padding: 28px 24px; }
@@ -674,6 +739,37 @@
                 <a href="#contact" class="card-link">Bespreek de mogelijkheden →</a>
             </div>
         </div>
+
+    </div>
+</section>
+
+<!-- LIVE TOOLS -->
+<section id="live">
+    <div class="live-header">
+        <span class="label fi">Op het feest</span>
+        <h2 class="section-title fi d1">Live tools</h2>
+    </div>
+    <div class="live-grid">
+
+        <a href="verzoek.html" class="live-card fi d1">
+            <div class="live-card-icon">🎵</div>
+            <span class="live-card-tag">Voor gasten</span>
+            <h3 class="live-card-title">Verzoek een nummer</h3>
+            <p class="live-card-desc">
+                Heb je een favoriet liedje? Stuur je verzoek rechtstreeks naar de DJ en hij doet zijn best om het te draaien.
+            </p>
+            <span class="live-card-cta">Vraag een nummer aan →</span>
+        </a>
+
+        <a href="dashboard.html" class="live-card dashboard-card fi d2">
+            <div class="live-card-icon">🎛</div>
+            <span class="live-card-tag">Voor de DJ</span>
+            <h3 class="live-card-title">DJ Dashboard</h3>
+            <p class="live-card-desc">
+                Realtime overzicht van alle verzoeken. Markeer nummers als gespeeld of sla ze over — altijd up-to-date.
+            </p>
+            <span class="live-card-cta">Open dashboard →</span>
+        </a>
 
     </div>
 </section>
