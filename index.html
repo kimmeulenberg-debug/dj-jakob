@@ -594,17 +594,75 @@
         .fi.d3 { transition-delay: 300ms; }
         .fi.d4 { transition-delay: 400ms; }
 
+        /* === HAMBURGER === */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            z-index: 102;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px; height: 2px;
+            background: var(--white);
+            border-radius: 2px;
+            transition: transform 250ms ease, opacity 250ms ease;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* === MOBILE MENU === */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(10,10,26,0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 90px 32px 40px;
+            z-index: 100;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border);
+        }
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a {
+            text-decoration: none;
+            color: rgba(253,250,245,0.82);
+            font-size: 16px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: color 200ms ease;
+        }
+        .mobile-menu a:hover { color: var(--cyan); }
+        .mobile-menu .mob-cta {
+            margin-top: 20px;
+            background: var(--pink);
+            color: var(--white) !important;
+            padding: 18px 24px;
+            text-align: center;
+            border-bottom: none !important;
+            box-shadow: 0 0 20px rgba(255,0,102,0.35);
+        }
+        .mobile-menu .mob-cta:hover { background: #cc0052; }
+
         /* === RESPONSIVE === */
         @media (max-width: 800px) {
             #nav { padding: 16px 24px; }
             #nav.scrolled { padding: 10px 24px; }
             .nav-name { display: none; }
-            .nav-links { gap: 16px; }
-            .nav-links li.hide-mob { display: none; }
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
             #hero { padding: 0 24px; }
             .hero-logo { width: 140px; margin-bottom: 24px; }
             .hero-logo svg.logo-svg { width: 140px; height: 140px; }
-            #diensten, #contact { padding: 72px 24px; }
+            #diensten, #contact, #live { padding: 72px 24px; }
             .diensten-grid { grid-template-columns: 1fr; }
             .live-grid { grid-template-columns: 1fr; }
             .card.featured { grid-column: 1; grid-template-columns: 1fr; }
@@ -622,12 +680,23 @@
         <span class="nav-name">DJ Jakob</span>
     </a>
     <ul class="nav-links">
-        <li class="hide-mob"><a href="#diensten">Diensten</a></li>
-        <li class="hide-mob"><a href="over-mij.html">Over Mij</a></li>
-        <li class="hide-mob"><a href="verzoek.html">Verzoek een nummer</a></li>
+        <li><a href="#diensten">Diensten</a></li>
+        <li><a href="over-mij.html">Over Mij</a></li>
+        <li><a href="verzoek.html">Verzoek een nummer</a></li>
         <li><a href="#contact" class="nav-cta">Boek DJ Jakob</a></li>
     </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menu openen">
+        <span></span><span></span><span></span>
+    </button>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+    <a href="#diensten">Diensten</a>
+    <a href="over-mij.html">Over Mij</a>
+    <a href="verzoek.html">Verzoek een nummer</a>
+    <a href="#contact" class="mob-cta">Boek DJ Jakob</a>
+</div>
 
 <!-- HERO -->
 <section id="hero">
@@ -854,6 +923,20 @@
 </footer>
 
 <script>
+    // Hamburger menu
+    const hamburger  = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobile-menu');
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+    });
+    mobileMenu.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            hamburger.classList.remove('open');
+            mobileMenu.classList.remove('open');
+        });
+    });
+
     // Nav: transparant → donker na 80px scroll
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => {
