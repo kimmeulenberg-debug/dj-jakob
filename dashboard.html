@@ -215,7 +215,7 @@
         .req-actions {
             display: flex; gap: 10px; margin-top: 16px;
         }
-        .btn-gespeeld, .btn-overgeslagen {
+        .btn-gespeeld, .btn-overgeslagen, .btn-verwijder {
             padding: 9px 20px;
             font-family: 'Inter', sans-serif;
             font-size: 12px; font-weight: 700;
@@ -242,6 +242,17 @@
             background: rgba(255,0,102,0.16);
             border-color: rgba(255,0,102,0.5);
             box-shadow: 0 0 12px rgba(255,0,102,0.15);
+        }
+        .btn-verwijder {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(253,250,245,0.35);
+            margin-left: auto;
+        }
+        .btn-verwijder:hover {
+            background: rgba(255,0,102,0.10);
+            border-color: rgba(255,0,102,0.4);
+            color: var(--pink);
         }
 
         /* STATUS BADGES */
@@ -492,15 +503,25 @@
                     <div class="req-actions">
                         <button class="btn-gespeeld"     onclick="updateStatus('${r.id}','gespeeld')">✓ Gespeeld</button>
                         <button class="btn-overgeslagen" onclick="updateStatus('${r.id}','overgeslagen')">✗ Overgeslagen</button>
+                        <button class="btn-verwijder"    onclick="verwijderVerzoek('${r.id}')">🗑 Verwijder</button>
                     </div>` : `
-                    <div>
+                    <div class="req-actions">
                         <span class="status-badge status-${r.status}">
                             ${r.status === 'gespeeld' ? '✓ Gespeeld' : '✗ Overgeslagen'}
                         </span>
+                        <button class="btn-verwijder" onclick="verwijderVerzoek('${r.id}')">🗑 Verwijder</button>
                     </div>`
                 }
             </div>
         `).join('');
+    }
+
+    async function verwijderVerzoek(id) {
+        if (!confirm('Dit verzoek definitief verwijderen?')) return;
+        const { error } = await db.from('requests').delete().eq('id', id);
+        if (error) { console.error(error); return; }
+        allRequests = allRequests.filter(r => r.id !== id);
+        render();
     }
 
     async function updateStatus(id, status) {
