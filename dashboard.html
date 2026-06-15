@@ -243,6 +243,16 @@
             border-color: rgba(255,0,102,0.5);
             box-shadow: 0 0 12px rgba(255,0,102,0.15);
         }
+        .btn-spelen {
+            background: rgba(0,212,255,0.12);
+            border: 1px solid rgba(0,212,255,0.35);
+            color: var(--cyan);
+        }
+        .btn-spelen:hover {
+            background: rgba(0,212,255,0.22);
+            border-color: rgba(0,212,255,0.6);
+            box-shadow: 0 0 12px rgba(0,212,255,0.25);
+        }
         .btn-verwijder {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.12);
@@ -253,6 +263,31 @@
             background: rgba(255,0,102,0.10);
             border-color: rgba(255,0,102,0.4);
             color: var(--pink);
+        }
+
+        /* NOW PLAYING PULSE */
+        .spelend-card {
+            border-color: rgba(0,212,255,0.4) !important;
+            box-shadow: 0 0 20px rgba(0,212,255,0.08);
+        }
+        .spelend-indicator {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px;
+        }
+        .spelend-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 8px rgba(0,212,255,0.8);
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        .spelend-label {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--cyan);
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.4; transform: scale(0.7); }
         }
 
         /* STATUS BADGES */
@@ -272,6 +307,11 @@
             background: rgba(255,0,102,0.08);
             color: var(--pink);
             border: 1px solid rgba(255,0,102,0.25);
+        }
+        .status-spelend {
+            background: rgba(0,212,255,0.10);
+            color: var(--cyan);
+            border: 1px solid rgba(0,212,255,0.3);
         }
 
         /* EMPTY STATE */
@@ -348,6 +388,9 @@
         <div class="tabs">
             <button class="tab-btn active" data-tab="wachtend" onclick="setTab('wachtend')">
                 Wachtend <span class="tab-count" id="cnt-wachtend">0</span>
+            </button>
+            <button class="tab-btn" data-tab="spelend" onclick="setTab('spelend')">
+                Nu spelend <span class="tab-count" id="cnt-spelend">0</span>
             </button>
             <button class="tab-btn" data-tab="gespeeld" onclick="setTab('gespeeld')">
                 Gespeeld <span class="tab-count" id="cnt-gespeeld">0</span>
@@ -454,29 +497,38 @@
 
     function render() {
         const wachtend     = allRequests.filter(r => r.status === 'wachtend');
+        const spelend      = allRequests.filter(r => r.status === 'spelend');
         const gespeeld     = allRequests.filter(r => r.status === 'gespeeld');
         const overgeslagen = allRequests.filter(r => r.status === 'overgeslagen');
 
         // Counts
         document.getElementById('cnt-wachtend').textContent     = wachtend.length;
+        document.getElementById('cnt-spelend').textContent      = spelend.length;
         document.getElementById('cnt-gespeeld').textContent     = gespeeld.length;
         document.getElementById('cnt-overgeslagen').textContent = overgeslagen.length;
 
+        // Header badge toont wachtend + spelend
         const badge = document.getElementById('wacht-badge');
         badge.textContent = wachtend.length;
         badge.className = 'counter-badge' + (wachtend.length === 0 ? ' zero' : '');
 
-        // Render current tab
-        const list = currentTab === 'wachtend' ? wachtend
-                   : currentTab === 'gespeeld'  ? gespeeld
+        // Highlight "Nu spelend" tab als er iets speelt
+        const spelendTab = document.querySelector('[data-tab="spelend"]');
+        spelendTab.style.borderColor = spelend.length > 0 ? 'rgba(0,212,255,0.6)' : '';
+        spelendTab.style.color       = spelend.length > 0 ? 'var(--cyan)' : '';
+
+        const list = currentTab === 'wachtend'     ? wachtend
+                   : currentTab === 'spelend'       ? spelend
+                   : currentTab === 'gespeeld'      ? gespeeld
                    : overgeslagen;
 
         const el = document.getElementById('request-list');
 
         if (list.length === 0) {
-            const icons = { wachtend: '🎵', gespeeld: '✅', overgeslagen: '⏭' };
+            const icons = { wachtend: '🎵', spelend: '🎧', gespeeld: '✅', overgeslagen: '⏭' };
             const texts = {
                 wachtend:     'Nog geen verzoeken. Ze komen eraan!',
+                spelend:      'Geen nummer wordt nu gespeeld.',
                 gespeeld:     'Nog geen nummers gespeeld.',
                 overgeslagen: 'Nog niets overgeslagen.'
             };
@@ -489,7 +541,12 @@
         }
 
         el.innerHTML = list.map(r => `
-            <div class="req-card" id="req-${r.id}">
+            <div class="req-card ${r.status === 'spelend' ? 'spelend-card' : ''}" id="req-${r.id}">
+                ${r.status === 'spelend' ? `
+                    <div class="spelend-indicator">
+                        <div class="spelend-dot"></div>
+                        <span class="spelend-label">Nu spelend</span>
+                    </div>` : ''}
                 <div class="req-top">
                     <span class="req-naam">${escHtml(r.naam)}</span>
                     <span class="req-time">${formatTime(r.created_at)}</span>
@@ -501,15 +558,23 @@
                 ${r.bericht ? `<p class="req-bericht">"${escHtml(r.bericht)}"</p>` : ''}
                 ${r.status === 'wachtend' ? `
                     <div class="req-actions">
+                        <button class="btn-spelen"       onclick="updateStatus('${r.id}','spelend')">▶ Spelen</button>
                         <button class="btn-gespeeld"     onclick="updateStatus('${r.id}','gespeeld')">✓ Gespeeld</button>
                         <button class="btn-overgeslagen" onclick="updateStatus('${r.id}','overgeslagen')">✗ Overgeslagen</button>
-                        <button class="btn-verwijder"    onclick="verwijderVerzoek('${r.id}')">🗑 Verwijder</button>
-                    </div>` : `
+                        <button class="btn-verwijder"    onclick="verwijderVerzoek('${r.id}')">🗑</button>
+                    </div>`
+                : r.status === 'spelend' ? `
+                    <div class="req-actions">
+                        <button class="btn-gespeeld"     onclick="updateStatus('${r.id}','gespeeld')">✓ Gespeeld</button>
+                        <button class="btn-overgeslagen" onclick="updateStatus('${r.id}','overgeslagen')">✗ Overgeslagen</button>
+                        <button class="btn-verwijder"    onclick="verwijderVerzoek('${r.id}')">🗑</button>
+                    </div>`
+                : `
                     <div class="req-actions">
                         <span class="status-badge status-${r.status}">
                             ${r.status === 'gespeeld' ? '✓ Gespeeld' : '✗ Overgeslagen'}
                         </span>
-                        <button class="btn-verwijder" onclick="verwijderVerzoek('${r.id}')">🗑 Verwijder</button>
+                        <button class="btn-verwijder" onclick="verwijderVerzoek('${r.id}')">🗑</button>
                     </div>`
                 }
             </div>
