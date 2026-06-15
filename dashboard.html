@@ -123,6 +123,22 @@
             min-width: 32px; text-align: center;
         }
         .counter-badge.zero { background: rgba(255,255,255,0.1); box-shadow: none; }
+        .btn-alles-wis {
+            background: transparent;
+            border: 1px solid rgba(255,0,102,0.25);
+            color: rgba(255,0,102,0.6);
+            padding: 8px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; cursor: pointer;
+            border-radius: 4px;
+            transition: all 200ms ease;
+        }
+        .btn-alles-wis:hover {
+            background: rgba(255,0,102,0.12);
+            border-color: rgba(255,0,102,0.6);
+            color: var(--pink);
+        }
         .btn-logout {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.15);
@@ -381,6 +397,7 @@
             <span>Wachtend:</span>
             <span class="counter-badge zero" id="wacht-badge">0</span>
         </div>
+        <button class="btn-alles-wis" onclick="verwijderAlles()">🗑 Alles wissen</button>
         <button class="btn-logout" onclick="logout()">Uitloggen</button>
     </header>
 
@@ -579,6 +596,14 @@
                 }
             </div>
         `).join('');
+    }
+
+    async function verwijderAlles() {
+        if (!confirm('Alle verzoeken definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+        const { error } = await db.from('requests').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) { console.error(error); return; }
+        allRequests = [];
+        render();
     }
 
     async function verwijderVerzoek(id) {
