@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muziek Bingo — DJ Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; overflow-x: hidden; }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --orange: #FF8C00;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.55);
+            --border: rgba(0,212,255,0.10);
+        }
+
+        /* NAV */
+        #nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 48px;
+            background: transparent;
+            transition: background 300ms ease, padding 300ms ease, border-color 300ms ease;
+            border-bottom: 1px solid transparent;
+        }
+        #nav.scrolled {
+            background: rgba(10,10,26,0.94);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            padding: 12px 48px; border-bottom-color: var(--border);
+        }
+        .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo img {
+            height: 54px; width: 54px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.5)) drop-shadow(0 0 14px rgba(0,212,255,0.35));
+            transition: height 300ms ease, width 300ms ease;
+        }
+        #nav.scrolled .nav-logo img { height: 40px; width: 40px; }
+        .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+        .nav-links a {
+            text-decoration: none; color: rgba(253,250,245,0.82);
+            font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            transition: color 200ms ease;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+        .nav-cta {
+            background: var(--pink) !important; color: var(--white) !important;
+            padding: 10px 20px;
+            box-shadow: 0 0 16px rgba(255,0,102,0.35);
+            transition: background 200ms ease, box-shadow 200ms ease !important;
+        }
+        .nav-cta:hover { background: #cc0052 !important; box-shadow: 0 0 26px rgba(255,0,102,0.6) !important; }
+
+        /* HAMBURGER */
+        .hamburger {
+            display: none; flex-direction: column; justify-content: center;
+            gap: 5px; background: none; border: none; cursor: pointer;
+            padding: 6px; z-index: 102;
+        }
+        .hamburger span {
+            display: block; width: 24px; height: 2px;
+            background: var(--white); border-radius: 2px;
+            transition: transform 250ms ease, opacity 250ms ease;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        .mobile-menu {
+            display: none; position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(10,10,26,0.98); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 90px 32px 40px; z-index: 100;
+            flex-direction: column; border-bottom: 1px solid var(--border);
+        }
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a {
+            text-decoration: none; color: rgba(253,250,245,0.82);
+            font-size: 16px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: color 200ms ease;
+        }
+        .mobile-menu a:hover, .mobile-menu a.active { color: var(--cyan); }
+        .mobile-menu .mob-cta {
+            margin-top: 20px; background: var(--pink);
+            color: var(--white) !important; padding: 18px 24px;
+            text-align: center; border-bottom: none !important;
+            box-shadow: 0 0 20px rgba(255,0,102,0.35);
+        }
+
+        /* PAGE HEADER */
+        #page-header {
+            background: var(--mid);
+            padding: 140px 48px 64px;
+            text-align: center;
+            position: relative; overflow: hidden;
+        }
+        #page-header::before {
+            content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--pink), transparent);
+        }
+        .page-label {
+            display: inline-block; font-size: 11px; font-weight: 700;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--pink); margin-bottom: 14px;
+        }
+        .page-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(36px, 5vw, 64px);
+            letter-spacing: 0.04em; color: var(--white); line-height: 1.05;
+        }
+        .page-sub {
+            font-size: 16px; color: var(--muted); margin-top: 14px; line-height: 1.7;
+        }
+
+        /* BINGO SECTION */
+        #bingo-section {
+            background: var(--dark);
+            padding: 56px 24px 96px;
+        }
+
+        .bingo-wrap {
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        /* BINGO HEADER ROW */
+        .bingo-header-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .bingo-letter {
+            text-align: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(22px, 4vw, 36px);
+            letter-spacing: 0.06em;
+        }
+        .bingo-letter:nth-child(1) { color: var(--cyan); text-shadow: 0 0 14px rgba(0,212,255,0.5); }
+        .bingo-letter:nth-child(2) { color: var(--pink); text-shadow: 0 0 14px rgba(255,0,102,0.5); }
+        .bingo-letter:nth-child(3) { color: var(--orange); text-shadow: 0 0 14px rgba(255,140,0,0.5); }
+        .bingo-letter:nth-child(4) { color: #9B59FF; text-shadow: 0 0 14px rgba(155,89,255,0.5); }
+        .bingo-letter:nth-child(5) { color: #00E676; text-shadow: 0 0 14px rgba(0,230,118,0.5); }
+
+        /* BINGO GRID */
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            padding: 6px 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 200ms ease, background 200ms ease, transform 150ms ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .bingo-cell:hover { border-color: rgba(0,212,255,0.3); transform: scale(1.02); }
+        .bingo-cell:active { transform: scale(0.97); }
+
+        .bingo-cell.marked {
+            background: rgba(0,212,255,0.12);
+            border-color: rgba(0,212,255,0.5);
+        }
+        .bingo-cell.marked::after {
+            content: '✓';
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(20px, 4vw, 32px);
+            color: var(--cyan);
+            font-weight: 700;
+            background: rgba(0,212,255,0.10);
+            text-shadow: 0 0 16px rgba(0,212,255,0.7);
+        }
+        .bingo-cell.free {
+            background: rgba(255,0,102,0.10);
+            border-color: rgba(255,0,102,0.35);
+            cursor: default;
+        }
+        .bingo-cell.free::after {
+            content: '★';
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(22px, 4vw, 34px);
+            color: var(--pink);
+            text-shadow: 0 0 20px rgba(255,0,102,0.7);
+        }
+        .bingo-cell.win-line {
+            border-color: var(--cyan) !important;
+            box-shadow: 0 0 18px rgba(0,212,255,0.35);
+            animation: winPulse 1s ease-in-out infinite alternate;
+        }
+        @keyframes winPulse {
+            from { box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+            to   { box-shadow: 0 0 28px rgba(0,212,255,0.7); }
+        }
+
+        .cell-artist {
+            font-size: clamp(7px, 1.1vw, 10px);
+            color: var(--muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-bottom: 3px;
+        }
+        .cell-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(9px, 1.8vw, 14px);
+            letter-spacing: 0.02em;
+            color: var(--white);
+            line-height: 1.15;
+        }
+
+        /* BINGO CONTROLS */
+        .bingo-controls {
+            display: flex; gap: 12px; justify-content: center;
+            margin-top: 28px; flex-wrap: wrap;
+        }
+        .btn-nieuw {
+            background: var(--pink); color: var(--white);
+            border: none; padding: 14px 36px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            box-shadow: 0 0 20px rgba(255,0,102,0.30);
+            transition: background 200ms ease, box-shadow 200ms ease, transform 150ms ease;
+        }
+        .btn-nieuw:hover {
+            background: #cc0052;
+            box-shadow: 0 0 32px rgba(255,0,102,0.50);
+            transform: translateY(-2px);
+        }
+        .btn-reset {
+            background: transparent; color: var(--muted);
+            border: 1px solid rgba(255,255,255,0.14);
+            padding: 14px 28px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 600;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            transition: all 200ms ease;
+        }
+        .btn-reset:hover { border-color: rgba(0,212,255,0.4); color: var(--cyan); }
+
+        /* BINGO CELEBRATION */
+        #bingo-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(10,10,26,0.88);
+            backdrop-filter: blur(8px);
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+        }
+        #bingo-overlay.show { display: flex; }
+        .bingo-win-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(64px, 14vw, 120px);
+            letter-spacing: 0.04em;
+            background: linear-gradient(135deg, var(--cyan), var(--pink), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 2s ease-in-out infinite alternate;
+            line-height: 1;
+        }
+        @keyframes shimmer {
+            from { filter: drop-shadow(0 0 20px rgba(0,212,255,0.6)); }
+            to   { filter: drop-shadow(0 0 40px rgba(255,0,102,0.6)); }
+        }
+        .bingo-win-sub {
+            font-size: 18px; color: var(--muted);
+            margin-top: 16px; margin-bottom: 40px;
+        }
+        .btn-door {
+            background: var(--cyan); color: var(--dark);
+            border: none; padding: 16px 48px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px; font-weight: 700;
+            letter-spacing: 0.10em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            transition: background 200ms ease, transform 150ms ease;
+        }
+        .btn-door:hover { background: #00bce0; transform: translateY(-2px); }
+
+        /* HOE WERKT HET */
+        #uitleg {
+            background: var(--mid);
+            padding: 64px 48px;
+        }
+        .uitleg-inner {
+            max-width: 700px; margin: 0 auto; text-align: center;
+        }
+        .uitleg-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(28px, 4vw, 48px);
+            letter-spacing: 0.04em; color: var(--white);
+            margin-bottom: 40px;
+        }
+        .uitleg-steps {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+            text-align: left;
+        }
+        .step { display: flex; flex-direction: column; gap: 10px; }
+        .step-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 42px; letter-spacing: 0.04em;
+            color: var(--pink); line-height: 1;
+        }
+        .step-title {
+            font-size: 15px; font-weight: 700; color: var(--white);
+        }
+        .step-text {
+            font-size: 14px; color: var(--muted); line-height: 1.6;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #06060F;
+            border-top: 1px solid rgba(0,212,255,0.09);
+            padding: 36px 48px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 20px;
+        }
+        .footer-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .footer-brand img {
+            height: 52px; width: 52px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 8px rgba(255,140,0,0.45)) drop-shadow(0 0 14px rgba(0,212,255,0.30));
+        }
+        .footer-brand-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px; letter-spacing: 0.06em; color: var(--cyan);
+        }
+        .footer-socials { display: flex; gap: 18px; }
+        .footer-socials a {
+            color: var(--cyan); text-decoration: none;
+            filter: drop-shadow(0 0 4px rgba(0,212,255,0.25));
+            display: flex; align-items: center;
+            transition: color 200ms ease, filter 200ms ease;
+        }
+        .footer-socials a:hover { color: var(--pink); filter: drop-shadow(0 0 8px rgba(255,0,102,0.45)); }
+        .footer-copy { font-size: 12px; color: rgba(253,250,245,0.28); }
+
+        /* RESPONSIVE */
+        @media (max-width: 800px) {
+            #nav { padding: 16px 24px; }
+            #nav.scrolled { padding: 10px 24px; }
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            #page-header { padding: 110px 24px 52px; }
+            #uitleg { padding: 56px 24px; }
+            .uitleg-steps { grid-template-columns: 1fr; gap: 24px; }
+            footer { flex-direction: column; align-items: center; text-align: center; padding: 28px 24px; }
+        }
+        @media (max-width: 480px) {
+            .bingo-cell { border-radius: 3px; }
+            .bingo-controls { flex-direction: column; align-items: stretch; }
+            .btn-nieuw, .btn-reset { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- BINGO OVERLAY -->
+<div id="bingo-overlay">
+    <div class="bingo-win-title">BINGO!</div>
+    <p class="bingo-win-sub">Gefeliciteerd — roep het lekker hard! 🎉</p>
+    <button class="btn-door" onclick="sluitOverlay()">Doorgaan</button>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+    <a href="index.html" class="nav-logo">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob logo">
+    </a>
+    <ul class="nav-links">
+        <li><a href="index.html#diensten">Diensten</a></li>
+        <li><a href="over-mij.html">Over Mij</a></li>
+        <li><a href="verzoek.html">Verzoek een nummer</a></li>
+        <li><a href="muziekbingo.html" class="active">Muziek Bingo</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Boek DJ Jakob</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menu openen">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+    <a href="index.html#diensten">Diensten</a>
+    <a href="over-mij.html">Over Mij</a>
+    <a href="verzoek.html">Verzoek een nummer</a>
+    <a href="muziekbingo.html" class="active">Muziek Bingo</a>
+    <a href="index.html#contact" class="mob-cta">Boek DJ Jakob</a>
+</div>
+
+<!-- PAGE HEADER -->
+<section id="page-header">
+    <p class="page-label">Speel mee vanavond</p>
+    <h1 class="page-title">Muziek Bingo</h1>
+    <p class="page-sub">Herken jij het nummer? Kruis het vakje aan en roep BINGO!</p>
+</section>
+
+<!-- BINGO SECTION -->
+<section id="bingo-section">
+    <div class="bingo-wrap">
+
+        <div class="bingo-header-row">
+            <div class="bingo-letter">B</div>
+            <div class="bingo-letter">I</div>
+            <div class="bingo-letter">N</div>
+            <div class="bingo-letter">G</div>
+            <div class="bingo-letter">O</div>
+        </div>
+
+        <div class="bingo-grid" id="bingo-grid"></div>
+
+        <div class="bingo-controls">
+            <button class="btn-nieuw" onclick="nieuwKaart()">🎲 Nieuw kaart</button>
+            <button class="btn-reset" onclick="resetKaart()">↺ Wis mijn vakjes</button>
+        </div>
+
+    </div>
+</section>
+
+<!-- UITLEG -->
+<section id="uitleg">
+    <div class="uitleg-inner">
+        <h2 class="uitleg-title">Hoe werkt het?</h2>
+        <div class="uitleg-steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-title">Krijg je kaart</div>
+                <div class="step-text">Iedereen krijgt een ander kaart met 24 nummers — tik op "Nieuw kaart" als je een andere wilt.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-title">Herken het nummer</div>
+                <div class="step-text">Hoor je een nummer dat op jouw kaart staat? Tik het vakje aan om het te markeren.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-title">Roep BINGO!</div>
+                <div class="step-text">Vijf vakjes op een rij — horizontaal, verticaal of diagonaal — en jij wint. Roep het zo hard je kan!</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <a href="index.html" class="footer-brand">
+        <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
+        <span class="footer-brand-name">DJ Jakob</span>
+    </a>
+    <div class="footer-socials">
+        <a href="#" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+        </a>
+        <a href="#" aria-label="Facebook">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+        </a>
+        <a href="#" aria-label="Spotify">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 13.5c2.5-1 5.5-1 8 0M7 10.5c3-1.2 7-1.2 10 0M9 16.5c2-0.8 4-0.8 6 0"/>
+            </svg>
+        </a>
+    </div>
+    <p class="footer-copy">© 2026 DJ Jakob — Est. '76. Alle rechten voorbehouden.</p>
+</footer>
+
+<script>
+// ============================================================
+// SONGPOOL — pas hier de nummers aan
+// ============================================================
+const SONGS = [
+    { artist: 'ABBA',              title: 'Dancing Queen' },
+    { artist: 'ABBA',              title: 'Voulez-Vous' },
+    { artist: 'ABBA',              title: 'Mamma Mia' },
+    { artist: 'Queen',             title: 'Bohemian Rhapsody' },
+    { artist: 'Queen',             title: "Don't Stop Me Now" },
+    { artist: 'Bon Jovi',          title: 'Living on a Prayer' },
+    { artist: 'Village People',    title: 'YMCA' },
+    { artist: 'Neil Diamond',      title: 'Sweet Caroline' },
+    { artist: 'Bonnie Tyler',      title: 'Total Eclipse' },
+    { artist: 'Toto',              title: 'Africa' },
+    { artist: 'A-ha',              title: 'Take On Me' },
+    { artist: 'Ricky Martin',      title: "Livin' La Vida Loca" },
+    { artist: 'Shakira',           title: "Hips Don't Lie" },
+    { artist: 'Daft Punk',         title: 'Get Lucky' },
+    { artist: 'Bruno Mars',        title: 'Uptown Funk' },
+    { artist: 'Justin Timberlake', title: "Can't Stop the Feeling" },
+    { artist: 'Pharrell Williams', title: 'Happy' },
+    { artist: 'Ed Sheeran',        title: 'Shape of You' },
+    { artist: 'The Weeknd',        title: 'Blinding Lights' },
+    { artist: 'Dua Lipa',          title: 'Levitating' },
+    { artist: 'Harry Styles',      title: 'As It Was' },
+    { artist: 'Miley Cyrus',       title: 'Flowers' },
+    { artist: 'Taylor Swift',      title: 'Shake It Off' },
+    { artist: 'Taylor Swift',      title: 'Anti-Hero' },
+    { artist: 'Avicii',            title: 'Wake Me Up' },
+    { artist: 'Martin Garrix',     title: 'Animals' },
+    { artist: 'Swedish House Mafia', title: "Don't You Worry Child" },
+    { artist: 'David Guetta',      title: 'Titanium' },
+    { artist: 'Snollebollekes',    title: 'Links Rechts' },
+    { artist: 'Danny Vera',        title: 'Rollercoaster' },
+    { artist: 'Bløf',              title: 'Zoutelande' },
+    { artist: 'Marco Borsato',     title: 'Binnen' },
+    { artist: 'Doe Maar',          title: 'Is Dit Alles' },
+    { artist: 'André Hazes',       title: 'Zij Gelooft in Mij' },
+    { artist: 'Benny Neyman',      title: 'Stil In Mij' },
+];
+
+// ============================================================
+// BINGO LOGIC
+// ============================================================
+const GRID_SIZE = 5;
+const FREE_INDEX = 12; // midden (rij 2, kolom 2 — 0-indexed)
+
+let card    = [];  // array van 25 songindices (null = FREE)
+let marked  = new Array(25).fill(false);
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function genereerKaart() {
+    const picks = shuffle(SONGS).slice(0, 24);
+    card = [];
+    for (let i = 0; i < 25; i++) {
+        if (i === FREE_INDEX) { card.push(null); }
+        else { card.push(picks[i < FREE_INDEX ? i : i - 1]); }
+    }
+    marked = new Array(25).fill(false);
+    marked[FREE_INDEX] = true;
+    slaOp();
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('bingo-grid');
+    grid.innerHTML = card.map((song, i) => {
+        const isFree    = i === FREE_INDEX;
+        const isMarked  = marked[i];
+        let cls = 'bingo-cell';
+        if (isFree)   cls += ' free';
+        else if (isMarked) cls += ' marked';
+        const onclick = isFree ? '' : `onclick="toggleCell(${i})"`;
+        return `
+            <div class="${cls}" ${onclick} data-index="${i}">
+                ${!isFree ? `
+                    <span class="cell-artist">${escHtml(song.artist)}</span>
+                    <span class="cell-title">${escHtml(song.title)}</span>
+                ` : ''}
+            </div>`;
+    }).join('');
+}
+
+function toggleCell(i) {
+    if (i === FREE_INDEX) return;
+    marked[i] = !marked[i];
+    slaOp();
+    renderGrid();
+    if (checkBingo()) {
+        setTimeout(() => {
+            highlightWinLines();
+            document.getElementById('bingo-overlay').classList.add('show');
+        }, 200);
+    }
+}
+
+function checkBingo() {
+    // Rijen
+    for (let r = 0; r < 5; r++) {
+        if ([0,1,2,3,4].every(c => marked[r*5+c])) return true;
+    }
+    // Kolommen
+    for (let c = 0; c < 5; c++) {
+        if ([0,1,2,3,4].every(r => marked[r*5+c])) return true;
+    }
+    // Diagonalen
+    if ([0,6,12,18,24].every(i => marked[i])) return true;
+    if ([4,8,12,16,20].every(i => marked[i])) return true;
+    return false;
+}
+
+function highlightWinLines() {
+    const cells = document.querySelectorAll('.bingo-cell');
+    const winCells = new Set();
+
+    for (let r = 0; r < 5; r++) {
+        const row = [0,1,2,3,4].map(c => r*5+c);
+        if (row.every(i => marked[i])) row.forEach(i => winCells.add(i));
+    }
+    for (let c = 0; c < 5; c++) {
+        const col = [0,1,2,3,4].map(r => r*5+c);
+        if (col.every(i => marked[i])) col.forEach(i => winCells.add(i));
+    }
+    const d1 = [0,6,12,18,24];
+    const d2 = [4,8,12,16,20];
+    if (d1.every(i => marked[i])) d1.forEach(i => winCells.add(i));
+    if (d2.every(i => marked[i])) d2.forEach(i => winCells.add(i));
+
+    winCells.forEach(i => cells[i].classList.add('win-line'));
+}
+
+function sluitOverlay() {
+    document.getElementById('bingo-overlay').classList.remove('show');
+}
+
+function nieuwKaart() {
+    if (marked.some((m, i) => m && i !== FREE_INDEX)) {
+        if (!confirm('Nieuw kaart aanmaken? Je huidige kaart gaat verloren.')) return;
+    }
+    genereerKaart();
+}
+
+function resetKaart() {
+    marked = new Array(25).fill(false);
+    marked[FREE_INDEX] = true;
+    slaOp();
+    renderGrid();
+}
+
+function slaOp() {
+    sessionStorage.setItem('bingo-card',   JSON.stringify(card));
+    sessionStorage.setItem('bingo-marked', JSON.stringify(marked));
+}
+
+function laadOpgeslagen() {
+    try {
+        const c = JSON.parse(sessionStorage.getItem('bingo-card'));
+        const m = JSON.parse(sessionStorage.getItem('bingo-marked'));
+        if (c && m && c.length === 25 && m.length === 25) {
+            card   = c;
+            marked = m;
+            renderGrid();
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+if (!laadOpgeslagen()) genereerKaart();
+
+// Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 80);
+}, { passive: true });
+
+// Hamburger
+const hamburger  = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileMenu.classList.toggle('open');
+});
+mobileMenu.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+    });
+});
+</script>
+
+</body>
+</html>
