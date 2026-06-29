@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Kaarten Printen — DJ Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --orange: #FF8C00;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.55);
+            --border: rgba(0,212,255,0.10);
+        }
+
+        /* ========== PIN SCREEN ========== */
+        #pin-screen {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--dark);
+        }
+        .pin-logo {
+            width: 72px; height: 72px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 12px rgba(255,140,0,0.55)) drop-shadow(0 0 24px rgba(0,212,255,0.35));
+            margin-bottom: 24px;
+        }
+        .pin-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 0.08em; color: var(--white); margin-bottom: 6px; }
+        .pin-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+        .pin-dots { display: flex; gap: 14px; margin-bottom: 10px; }
+        .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0,212,255,0.4); transition: background 150ms ease; }
+        .pin-dot.filled { background: var(--cyan); border-color: var(--cyan); }
+        .pin-error { font-size: 12px; color: var(--pink); min-height: 18px; margin-bottom: 24px; text-align: center; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+        .numpad-btn {
+            height: 72px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 4px; color: var(--white);
+            font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.04em;
+            cursor: pointer; transition: background 150ms ease, border-color 150ms ease;
+        }
+        .numpad-btn:hover { background: rgba(0,212,255,0.10); border-color: rgba(0,212,255,0.35); }
+        .numpad-btn:active { transform: scale(0.94); }
+        .numpad-btn.empty { background: transparent; border-color: transparent; cursor: default; }
+        .numpad-btn.del { font-size: 20px; }
+
+        /* ========== APP HEADER ========== */
+        #app { display: none; min-height: 100vh; }
+
+        .app-header {
+            background: rgba(10,10,26,0.96);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .app-brand { display: flex; align-items: center; gap: 12px; }
+        .app-brand img { height: 40px; width: 40px; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 6px rgba(255,140,0,0.45)); }
+        .app-brand-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.06em; color: var(--cyan); }
+        .app-brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+        .btn-logout-app {
+            background: none; border: 1px solid rgba(255,255,255,0.12); color: var(--muted);
+            padding: 8px 16px; border-radius: 3px; font-size: 12px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all 200ms ease;
+        }
+        .btn-logout-app:hover { border-color: var(--pink); color: var(--pink); }
+
+        /* ========== CONTROLS ========== */
+        .controls-bar {
+            max-width: 860px; margin: 40px auto 32px;
+            padding: 0 32px;
+            display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;
+        }
+        .ctrl-group { display: flex; flex-direction: column; gap: 8px; }
+        .ctrl-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+        .ctrl-select {
+            background: var(--card); border: 1px solid var(--border); color: var(--white);
+            padding: 12px 16px; border-radius: 3px; font-family: 'Inter', sans-serif;
+            font-size: 14px; cursor: pointer; min-width: 140px; outline: none;
+            transition: border-color 200ms ease;
+        }
+        .ctrl-select:focus { border-color: rgba(0,212,255,0.45); }
+        .btn-genereer {
+            background: var(--cyan); color: var(--dark); border: none;
+            padding: 13px 32px; font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            box-shadow: 0 0 24px rgba(0,212,255,0.3);
+            transition: all 200ms ease; white-space: nowrap;
+        }
+        .btn-genereer:hover { background: #00bce0; box-shadow: 0 0 40px rgba(0,212,255,0.5); transform: translateY(-2px); }
+        .btn-genereer:disabled { background: rgba(0,212,255,0.2); box-shadow: none; cursor: default; transform: none; color: rgba(10,10,26,0.4); }
+        .btn-print {
+            background: var(--pink); color: var(--white); border: none;
+            padding: 13px 32px; font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px;
+            box-shadow: 0 0 24px rgba(255,0,102,0.3);
+            transition: all 200ms ease; white-space: nowrap;
+        }
+        .btn-print:hover { background: #cc0052; box-shadow: 0 0 40px rgba(255,0,102,0.5); transform: translateY(-2px); }
+        .btn-print:disabled { background: rgba(255,0,102,0.2); box-shadow: none; cursor: default; transform: none; }
+        .songs-info { font-size: 12px; color: var(--muted); align-self: center; }
+        .songs-info strong { color: var(--white); }
+
+        /* ========== PREVIEW AREA ========== */
+        .preview-area {
+            max-width: 860px; margin: 0 auto 64px;
+            padding: 0 32px;
+        }
+        .preview-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 20px;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .no-cards {
+            grid-column: 1/-1;
+            text-align: center; padding: 64px 0;
+            font-size: 14px; color: rgba(253,250,245,0.2);
+        }
+
+        /* ========== BINGO CARD ========== */
+        .bingo-card {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            color: #111;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+        }
+        .card-header {
+            background: #111;
+            padding: 10px 14px 8px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-logo { height: 32px; width: 32px; object-fit: contain; border-radius: 50%; }
+        .card-brand-name { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.06em; color: #00D4FF; }
+        .card-num { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; }
+
+        .bingo-letters {
+            display: grid; grid-template-columns: repeat(5,1fr);
+            background: #0A0A1A;
+        }
+        .bl {
+            text-align: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px; letter-spacing: 0.04em;
+            padding: 6px 0;
+        }
+        .bl:nth-child(1) { color: #00D4FF; }
+        .bl:nth-child(2) { color: #FF0066; }
+        .bl:nth-child(3) { color: #FF8C00; }
+        .bl:nth-child(4) { color: #9B59FF; }
+        .bl:nth-child(5) { color: #00E676; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(5,1fr);
+            gap: 2px;
+            padding: 2px;
+            background: #ddd;
+        }
+        .card-cell {
+            background: #fff;
+            aspect-ratio: 1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 3px 2px;
+            position: relative;
+        }
+        .card-cell.free {
+            background: #0A0A1A;
+        }
+        .card-cell.free::after {
+            content: '★';
+            font-size: 20px; color: #FF0066;
+        }
+        .cc-artist {
+            font-size: 6px; color: #888;
+            letter-spacing: 0.04em; text-transform: uppercase;
+            line-height: 1.2; margin-bottom: 2px;
+        }
+        .cc-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 10px; letter-spacing: 0.02em;
+            color: #111; line-height: 1.15;
+        }
+
+        .card-footer {
+            background: #f5f5f5;
+            padding: 6px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-top: 1px solid #e0e0e0;
+        }
+        .card-footer-url { font-size: 9px; color: #888; letter-spacing: 0.04em; }
+        .card-footer-kaart { font-size: 9px; color: #bbb; }
+
+        /* ========== PRINT ========== */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+
+            body { background: #fff !important; color: #000 !important; }
+            #pin-screen { display: none !important; }
+            #app { display: block !important; }
+            .app-header { display: none !important; }
+            .controls-bar { display: none !important; }
+            .preview-label { display: none !important; }
+            .preview-area { margin: 0; padding: 0; max-width: 100%; }
+
+            .preview-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6mm;
+            }
+
+            /* Elke 2 kaarten → nieuwe pagina */
+            .bingo-card:nth-child(2n+1) { break-before: auto; }
+            .bingo-card:nth-child(2n) { break-after: page; }
+            .bingo-card:last-child { break-after: avoid; }
+
+            .bingo-card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .controls-bar { flex-direction: column; align-items: stretch; }
+            .preview-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+    <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="pin-logo">
+    <h1 class="pin-title">Bingo Kaarten</h1>
+    <p class="pin-sub">Voer je pincode in</p>
+    <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <p class="pin-error" id="pin-error">&nbsp;</p>
+    <div class="numpad">
+        <button class="numpad-btn" onclick="addDigit('1')">1</button>
+        <button class="numpad-btn" onclick="addDigit('2')">2</button>
+        <button class="numpad-btn" onclick="addDigit('3')">3</button>
+        <button class="numpad-btn" onclick="addDigit('4')">4</button>
+        <button class="numpad-btn" onclick="addDigit('5')">5</button>
+        <button class="numpad-btn" onclick="addDigit('6')">6</button>
+        <button class="numpad-btn" onclick="addDigit('7')">7</button>
+        <button class="numpad-btn" onclick="addDigit('8')">8</button>
+        <button class="numpad-btn" onclick="addDigit('9')">9</button>
+        <button class="numpad-btn empty"></button>
+        <button class="numpad-btn" onclick="addDigit('0')">0</button>
+        <button class="numpad-btn del" onclick="deleteDigit()">⌫</button>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+    <header class="app-header">
+        <div class="app-brand">
+            <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
+            <div>
+                <div class="app-brand-name">DJ Jakob</div>
+                <div class="app-brand-sub">Bingo Kaarten Printen</div>
+            </div>
+        </div>
+        <button class="btn-logout-app" onclick="logout()">Uitloggen</button>
+    </header>
+
+    <div class="controls-bar">
+        <div class="ctrl-group">
+            <label class="ctrl-label" for="aantal-select">Aantal kaarten</label>
+            <select class="ctrl-select" id="aantal-select">
+                <option value="4">4 kaarten</option>
+                <option value="8">8 kaarten</option>
+                <option value="12">12 kaarten</option>
+                <option value="16">16 kaarten</option>
+                <option value="20">20 kaarten</option>
+                <option value="24">24 kaarten</option>
+                <option value="30">30 kaarten</option>
+            </select>
+        </div>
+        <button class="btn-genereer" id="btn-genereer" onclick="genereerKaarten()" disabled>
+            🎲 Genereer kaarten
+        </button>
+        <button class="btn-print" id="btn-print" onclick="window.print()" disabled>
+            🖨 Print kaarten
+        </button>
+        <span class="songs-info" id="songs-info">Playlist laden…</span>
+    </div>
+
+    <div class="preview-area">
+        <p class="preview-label" id="preview-label"></p>
+        <div class="preview-grid" id="preview-grid">
+            <p class="no-cards">Genereer kaarten om een voorbeeld te zien</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const PIN = '1976';
+    const SUPABASE_URL = 'https://zweumhnigwyjfjuowzts.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const FREE_INDEX = 12;
+    let SONGS = [];
+
+    // ============================================================
+    // PIN
+    // ============================================================
+    let enteredPin = '';
+    if (sessionStorage.getItem('dj-auth') === 'ok') openApp();
+
+    function addDigit(d) {
+        if (enteredPin.length >= 4) return;
+        enteredPin += d; updateDots();
+        if (enteredPin.length === 4) setTimeout(checkPin, 80);
+    }
+    function deleteDigit() { enteredPin = enteredPin.slice(0, -1); updateDots(); }
+    function updateDots() {
+        for (let i = 0; i < 4; i++)
+            document.getElementById('dot-' + i).classList.toggle('filled', i < enteredPin.length);
+    }
+    function checkPin() {
+        if (enteredPin === PIN) { sessionStorage.setItem('dj-auth', 'ok'); openApp(); return; }
+        const err = document.getElementById('pin-error');
+        err.textContent = 'Onjuiste pincode — probeer opnieuw';
+        for (let i = 0; i < 4; i++)
+            document.getElementById('dot-' + i).style.background = 'rgba(255,0,102,0.7)';
+        setTimeout(() => {
+            enteredPin = ''; updateDots(); err.textContent = ' ';
+            for (let i = 0; i < 4; i++) document.getElementById('dot-' + i).style.background = '';
+        }, 1000);
+    }
+    function logout() { sessionStorage.removeItem('dj-auth'); location.reload(); }
+
+    // ============================================================
+    // APP
+    // ============================================================
+    async function openApp() {
+        document.getElementById('pin-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        await loadSongs();
+    }
+
+    async function loadSongs() {
+        const { data, error } = await db.from('bingo_songs').select('*').order('artist').order('title');
+        SONGS = data || [];
+        const info = document.getElementById('songs-info');
+        const btn  = document.getElementById('btn-genereer');
+        if (SONGS.length < 24) {
+            info.textContent = `⚠ Slechts ${SONGS.length} nummers — minimaal 24 nodig`;
+            info.style.color = 'rgba(255,0,102,0.7)';
+        } else {
+            info.innerHTML = `<strong>${SONGS.length}</strong> nummers in playlist`;
+            info.style.color = '';
+            btn.disabled = false;
+        }
+    }
+
+    // ============================================================
+    // KAART GENEREREN
+    // ============================================================
+    function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function maakKaart() {
+        const picks = shuffle(SONGS).slice(0, 24);
+        const card = [];
+        for (let i = 0; i < 25; i++) {
+            card.push(i === FREE_INDEX ? null : picks[i < FREE_INDEX ? i : i - 1]);
+        }
+        return card;
+    }
+
+    function genereerKaarten() {
+        const aantal = parseInt(document.getElementById('aantal-select').value, 10);
+        const grid   = document.getElementById('preview-grid');
+        const label  = document.getElementById('preview-label');
+
+        grid.innerHTML = '';
+        label.textContent = `${aantal} unieke kaarten — voorbeeld`;
+
+        for (let k = 1; k <= aantal; k++) {
+            const card = maakKaart();
+            grid.insertAdjacentHTML('beforeend', renderKaart(card, k));
+        }
+
+        document.getElementById('btn-print').disabled = false;
+    }
+
+    function renderKaart(card, num) {
+        const cells = card.map((song, i) => {
+            if (i === FREE_INDEX) return `<div class="card-cell free"></div>`;
+            return `
+                <div class="card-cell">
+                    <span class="cc-artist">${escHtml(song.artist)}</span>
+                    <span class="cc-title">${escHtml(song.title)}</span>
+                </div>`;
+        }).join('');
+
+        return `
+        <div class="bingo-card">
+            <div class="card-header">
+                <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="card-logo">
+                <span class="card-brand-name">DJ Jakob</span>
+                <span class="card-num">Kaart #${num}</span>
+            </div>
+            <div class="bingo-letters">
+                <div class="bl">B</div>
+                <div class="bl">I</div>
+                <div class="bl">N</div>
+                <div class="bl">G</div>
+                <div class="bl">O</div>
+            </div>
+            <div class="card-grid">${cells}</div>
+            <div class="card-footer">
+                <span class="card-footer-url">djjakob.nl/muziekbingo</span>
+                <span class="card-footer-kaart">Kaart ${num}</span>
+            </div>
+        </div>`;
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
+
+</body>
+</html>
