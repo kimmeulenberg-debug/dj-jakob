@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo DJ — DJ Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0A1A; color: #FDFAF5;
+            overflow: hidden;
+        }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --orange: #FF8C00;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.55);
+            --border: rgba(0,212,255,0.10);
+        }
+
+        /* ========== PIN SCREEN ========== */
+        #pin-screen {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--dark);
+        }
+        .pin-logo {
+            width: 72px; height: 72px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 12px rgba(255,140,0,0.55)) drop-shadow(0 0 24px rgba(0,212,255,0.35));
+            margin-bottom: 24px;
+        }
+        .pin-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px; letter-spacing: 0.08em; color: var(--white);
+            margin-bottom: 6px;
+        }
+        .pin-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+        .pin-dots { display: flex; gap: 14px; margin-bottom: 10px; }
+        .pin-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(0,212,255,0.4);
+            transition: background 150ms ease, border-color 150ms ease;
+        }
+        .pin-dot.filled { background: var(--cyan); border-color: var(--cyan); }
+        .pin-error { font-size: 12px; color: var(--pink); min-height: 18px; margin-bottom: 24px; text-align: center; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+        .numpad-btn {
+            height: 72px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 4px;
+            color: var(--white); font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px; letter-spacing: 0.04em;
+            cursor: pointer; transition: background 150ms ease, border-color 150ms ease;
+        }
+        .numpad-btn:hover { background: rgba(0,212,255,0.10); border-color: rgba(0,212,255,0.35); }
+        .numpad-btn:active { transform: scale(0.94); }
+        .numpad-btn.empty { background: transparent; border-color: transparent; cursor: default; }
+        .numpad-btn.del { font-size: 20px; }
+
+        /* ========== MAIN LAYOUT ========== */
+        #app {
+            display: none;
+            height: 100vh;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: auto 1fr;
+        }
+
+        /* HEADER */
+        .dj-header {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 32px;
+            background: rgba(10,10,26,0.96);
+            border-bottom: 1px solid var(--border);
+        }
+        .dj-brand { display: flex; align-items: center; gap: 12px; }
+        .dj-brand img { height: 40px; width: 40px; object-fit: contain; border-radius: 50%;
+            filter: drop-shadow(0 0 6px rgba(255,140,0,0.45)); }
+        .dj-brand-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.06em; color: var(--cyan); }
+        .dj-brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+        .dj-header-right { display: flex; align-items: center; gap: 16px; }
+        .session-info { font-size: 12px; color: var(--muted); text-align: right; }
+        .session-info strong { color: var(--white); display: block; font-size: 14px; }
+        .btn-logout-dj {
+            background: none; border: 1px solid rgba(255,255,255,0.12); color: var(--muted);
+            padding: 8px 16px; border-radius: 3px; font-size: 12px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+            transition: all 200ms ease;
+        }
+        .btn-logout-dj:hover { border-color: var(--pink); color: var(--pink); }
+
+        /* MAIN — grote display */
+        .dj-main {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 48px 64px;
+            position: relative;
+            overflow: hidden;
+        }
+        .dj-main::before {
+            content: '';
+            position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .draw-counter {
+            font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 20px;
+        }
+        .draw-counter span { color: var(--cyan); }
+
+        .draw-display-big {
+            text-align: center; margin-bottom: 48px;
+            min-height: 220px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .draw-num-big {
+            font-size: 13px; font-weight: 700; letter-spacing: 0.18em;
+            text-transform: uppercase; color: var(--orange); margin-bottom: 16px;
+            opacity: 0; transition: opacity 300ms ease;
+        }
+        .draw-title-big {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(52px, 7vw, 100px);
+            letter-spacing: 0.03em; color: var(--white); line-height: 1;
+            text-shadow: 0 0 40px rgba(0,212,255,0.25);
+            opacity: 0; transform: translateY(12px);
+            transition: opacity 400ms ease, transform 400ms ease;
+        }
+        .draw-artist-big {
+            font-size: clamp(18px, 2.5vw, 28px); color: var(--muted);
+            margin-top: 12px; letter-spacing: 0.02em;
+            opacity: 0; transition: opacity 400ms ease 100ms;
+        }
+        .draw-display-big.show .draw-num-big,
+        .draw-display-big.show .draw-title-big,
+        .draw-display-big.show .draw-artist-big {
+            opacity: 1; transform: translateY(0);
+        }
+        .draw-empty-big {
+            font-size: 18px; color: rgba(253,250,245,0.2);
+            letter-spacing: 0.04em;
+        }
+
+        .btn-trek {
+            background: var(--cyan); color: var(--dark);
+            border: none; padding: 22px 64px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px; letter-spacing: 0.12em;
+            cursor: pointer; border-radius: 4px;
+            box-shadow: 0 0 32px rgba(0,212,255,0.35);
+            transition: all 200ms ease;
+            margin-bottom: 16px;
+        }
+        .btn-trek:hover:not(:disabled) {
+            background: #00bce0;
+            box-shadow: 0 0 52px rgba(0,212,255,0.55);
+            transform: translateY(-3px) scale(1.02);
+        }
+        .btn-trek:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+        .btn-trek:disabled {
+            background: rgba(0,212,255,0.18); color: rgba(10,10,26,0.4);
+            box-shadow: none; cursor: default;
+        }
+
+        .btn-nieuw-spel-dj {
+            background: transparent; border: 1px solid rgba(255,0,102,0.25);
+            color: rgba(255,0,102,0.6); padding: 12px 32px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+            letter-spacing: 0.10em; text-transform: uppercase;
+            cursor: pointer; border-radius: 3px; transition: all 200ms ease;
+        }
+        .btn-nieuw-spel-dj:hover { background: rgba(255,0,102,0.10); border-color: var(--pink); color: var(--pink); }
+
+        .remaining-bar {
+            margin-top: 32px; width: 100%; max-width: 400px;
+        }
+        .remaining-label {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: var(--muted); margin-bottom: 6px;
+            letter-spacing: 0.06em;
+        }
+        .remaining-label span { color: var(--white); font-weight: 700; }
+        .progress-track {
+            height: 3px; background: rgba(255,255,255,0.06);
+            border-radius: 2px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--cyan);
+            border-radius: 2px; transition: width 500ms ease;
+            box-shadow: 0 0 8px rgba(0,212,255,0.5);
+        }
+
+        /* SIDEBAR — history */
+        .dj-sidebar {
+            background: var(--mid);
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar-header {
+            padding: 20px 20px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+            text-transform: uppercase; color: var(--muted);
+            flex-shrink: 0;
+        }
+        .history-list {
+            flex: 1; overflow-y: auto;
+            padding: 12px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+        .history-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 3px; flex-shrink: 0;
+            transition: border-color 200ms ease;
+        }
+        .history-item.latest {
+            border-color: rgba(0,212,255,0.35);
+            background: rgba(0,212,255,0.06);
+        }
+        .h-seq {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px; color: var(--pink); min-width: 28px;
+        }
+        .h-title { font-size: 13px; font-weight: 600; color: var(--white); }
+        .h-artist { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .history-empty {
+            font-size: 13px; color: var(--muted); text-align: center;
+            padding: 32px 16px;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--card); border: 1px solid rgba(0,212,255,0.2);
+            color: var(--white); padding: 12px 24px; border-radius: 4px;
+            font-size: 14px; font-weight: 600;
+            opacity: 0; transition: opacity 250ms ease, transform 250ms ease;
+            pointer-events: none; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+            .dj-sidebar { max-height: 220px; border-left: none; border-top: 1px solid var(--border); }
+            .dj-main { padding: 32px 24px; }
+            .btn-trek { padding: 18px 48px; font-size: 22px; }
+            .history-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
+            .history-item { flex-shrink: 0; }
+            body { overflow: auto; }
+            #app { height: auto; min-height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+    <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="pin-logo">
+    <h1 class="pin-title">Bingo DJ</h1>
+    <p class="pin-sub">Voer je pincode in</p>
+    <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <p class="pin-error" id="pin-error">&nbsp;</p>
+    <div class="numpad">
+        <button class="numpad-btn" onclick="addDigit('1')">1</button>
+        <button class="numpad-btn" onclick="addDigit('2')">2</button>
+        <button class="numpad-btn" onclick="addDigit('3')">3</button>
+        <button class="numpad-btn" onclick="addDigit('4')">4</button>
+        <button class="numpad-btn" onclick="addDigit('5')">5</button>
+        <button class="numpad-btn" onclick="addDigit('6')">6</button>
+        <button class="numpad-btn" onclick="addDigit('7')">7</button>
+        <button class="numpad-btn" onclick="addDigit('8')">8</button>
+        <button class="numpad-btn" onclick="addDigit('9')">9</button>
+        <button class="numpad-btn empty"></button>
+        <button class="numpad-btn" onclick="addDigit('0')">0</button>
+        <button class="numpad-btn del" onclick="deleteDigit()">⌫</button>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+    <header class="dj-header">
+        <div class="dj-brand">
+            <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob">
+            <div>
+                <div class="dj-brand-name">DJ Jakob</div>
+                <div class="dj-brand-sub">Bingo DJ Scherm</div>
+            </div>
+        </div>
+        <div class="dj-header-right">
+            <div class="session-info">
+                <strong id="session-label">Geen actief spel</strong>
+                <span id="session-sub">Start een nieuw spel om te beginnen</span>
+            </div>
+            <button class="btn-logout-dj" onclick="logout()">Uitloggen</button>
+        </div>
+    </header>
+
+    <!-- MAIN DRAW AREA -->
+    <main class="dj-main">
+        <div class="draw-counter" id="draw-counter">
+            Getrokken: <span id="cnt-drawn">0</span> &nbsp;·&nbsp; Resterend: <span id="cnt-remaining">—</span>
+        </div>
+
+        <div class="draw-display-big" id="draw-display">
+            <p class="draw-empty-big">Druk op "Trek nummer" om te beginnen</p>
+        </div>
+
+        <button class="btn-trek" id="btn-trek" onclick="drawSong()">🎱 Trek nummer</button>
+        <button class="btn-nieuw-spel-dj" onclick="startNieuwSpel()">↺ Nieuw spel starten</button>
+
+        <div class="remaining-bar">
+            <div class="remaining-label">
+                <span>Voortgang</span>
+                <span><span id="pct">0</span>% getrokken</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SIDEBAR HISTORY -->
+    <aside class="dj-sidebar">
+        <div class="sidebar-header">Getrokken nummers</div>
+        <div class="history-list" id="history-list">
+            <p class="history-empty">Nog niets getrokken</p>
+        </div>
+    </aside>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const PIN = '1976';
+    const SUPABASE_URL = 'https://zweumhnigwyjfjuowzts.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================================
+    // PIN LOGIC
+    // ============================================================
+    let enteredPin = '';
+
+    if (sessionStorage.getItem('dj-auth') === 'ok') openApp();
+
+    function addDigit(d) {
+        if (enteredPin.length >= 4) return;
+        enteredPin += d;
+        updateDots();
+        if (enteredPin.length === 4) setTimeout(checkPin, 80);
+    }
+    function deleteDigit() { enteredPin = enteredPin.slice(0, -1); updateDots(); }
+    function updateDots() {
+        for (let i = 0; i < 4; i++)
+            document.getElementById('dot-' + i).classList.toggle('filled', i < enteredPin.length);
+    }
+    function checkPin() {
+        if (enteredPin === PIN) { sessionStorage.setItem('dj-auth', 'ok'); openApp(); return; }
+        const err = document.getElementById('pin-error');
+        err.textContent = 'Onjuiste pincode — probeer opnieuw';
+        for (let i = 0; i < 4; i++)
+            document.getElementById('dot-' + i).style.background = 'rgba(255,0,102,0.7)';
+        setTimeout(() => {
+            enteredPin = ''; updateDots(); err.textContent = ' ';
+            for (let i = 0; i < 4; i++) document.getElementById('dot-' + i).style.background = '';
+        }, 1000);
+    }
+    function logout() { sessionStorage.removeItem('dj-auth'); location.reload(); }
+
+    // ============================================================
+    // APP STATE
+    // ============================================================
+    let allSongs     = [];
+    let activeSessie = null;
+    let drawnSongs   = [];
+
+    async function openApp() {
+        document.getElementById('pin-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'grid';
+        await loadSongs();
+        await laadActiveSessie();
+        subscribeRealtime();
+    }
+
+    async function loadSongs() {
+        const { data } = await db.from('bingo_songs').select('*');
+        allSongs = data || [];
+    }
+
+    async function laadActiveSessie() {
+        const { data: sessions } = await db
+            .from('bingo_sessions').select('*')
+            .eq('active', true)
+            .order('created_at', { ascending: false })
+            .limit(1);
+        activeSessie = sessions?.[0] || null;
+
+        if (activeSessie) {
+            const { data: draws } = await db
+                .from('bingo_draws').select('*, bingo_songs(*)')
+                .eq('session_id', activeSessie.id)
+                .order('sequence');
+            drawnSongs = draws || [];
+        } else {
+            drawnSongs = [];
+        }
+        renderState();
+    }
+
+    // ============================================================
+    // DRAW LOGIC
+    // ============================================================
+    async function startNieuwSpel() {
+        if (!confirm('Nieuw spel starten? De huidige trek-history wordt gewist voor alle spelers.')) return;
+        if (activeSessie) {
+            await db.from('bingo_sessions').update({ active: false }).eq('id', activeSessie.id);
+        }
+        const { data } = await db.from('bingo_sessions').insert({ active: true }).select().single();
+        activeSessie = data;
+        drawnSongs   = [];
+        renderState();
+        showToast('Nieuw spel gestart!');
+    }
+
+    async function drawSong() {
+        if (!activeSessie) { await startNieuwSpel(); return; }
+
+        const drawnIds = drawnSongs.map(d => d.song_id);
+        const pool     = allSongs.filter(s => !drawnIds.includes(s.id));
+
+        if (pool.length === 0) {
+            showToast('Alle nummers zijn getrokken — start een nieuw spel!');
+            return;
+        }
+
+        const song = pool[Math.floor(Math.random() * pool.length)];
+        const seq  = drawnSongs.length + 1;
+
+        document.getElementById('btn-trek').disabled = true;
+
+        const { data, error } = await db.from('bingo_draws').insert({
+            session_id: activeSessie.id,
+            song_id:    song.id,
+            sequence:   seq
+        }).select('*, bingo_songs(*)').single();
+
+        document.getElementById('btn-trek').disabled = false;
+
+        if (error) { console.error(error); return; }
+        drawnSongs.push(data);
+        renderState();
+    }
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    function renderState() {
+        const total     = allSongs.length;
+        const drawn     = drawnSongs.length;
+        const remaining = total - drawn;
+        const pct       = total > 0 ? Math.round((drawn / total) * 100) : 0;
+
+        // Header
+        const label = document.getElementById('session-label');
+        const sub   = document.getElementById('session-sub');
+        if (activeSessie) {
+            label.textContent = 'Spel actief';
+            sub.textContent   = `${drawn} getrokken · ${remaining} resterend`;
+        } else {
+            label.textContent = 'Geen actief spel';
+            sub.textContent   = 'Start een nieuw spel om te beginnen';
+        }
+
+        // Counter + progress
+        document.getElementById('cnt-drawn').textContent     = drawn;
+        document.getElementById('cnt-remaining').textContent = activeSessie ? remaining : '—';
+        document.getElementById('pct').textContent           = pct;
+        document.getElementById('progress-fill').style.width = pct + '%';
+
+        // Trek knop
+        const btn = document.getElementById('btn-trek');
+        btn.disabled = remaining === 0;
+
+        // Main display
+        const display = document.getElementById('draw-display');
+        if (drawn > 0) {
+            const last = drawnSongs[drawn - 1];
+            const song = last.bingo_songs;
+            display.classList.remove('show');
+            void display.offsetWidth; // force reflow voor animatie
+            display.innerHTML = `
+                <div class="draw-num-big">Nummer ${last.sequence}</div>
+                <div class="draw-title-big">${escHtml(song.title)}</div>
+                <div class="draw-artist-big">${escHtml(song.artist)}</div>`;
+            requestAnimationFrame(() => display.classList.add('show'));
+        } else {
+            display.classList.remove('show');
+            display.innerHTML = '<p class="draw-empty-big">Druk op "Trek nummer" om te beginnen</p>';
+        }
+
+        // Sidebar history (nieuwste bovenaan)
+        const histList = document.getElementById('history-list');
+        if (drawn === 0) {
+            histList.innerHTML = '<p class="history-empty">Nog niets getrokken</p>';
+        } else {
+            const sorted = [...drawnSongs].reverse();
+            histList.innerHTML = sorted.map((d, idx) => `
+                <div class="history-item ${idx === 0 ? 'latest' : ''}">
+                    <div class="h-seq">${d.sequence}</div>
+                    <div>
+                        <div class="h-title">${escHtml(d.bingo_songs.title)}</div>
+                        <div class="h-artist">${escHtml(d.bingo_songs.artist)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // ============================================================
+    // REALTIME
+    // ============================================================
+    function subscribeRealtime() {
+        db.channel('bingo-dj-live')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bingo_sessions' }, async () => {
+                await laadActiveSessie();
+            })
+            .subscribe();
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    let toastTimer;
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
+
+</body>
+</html>
