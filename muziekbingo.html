@@ -361,6 +361,50 @@
         .footer-socials a:hover { color: var(--pink); filter: drop-shadow(0 0 8px rgba(255,0,102,0.45)); }
         .footer-copy { font-size: 12px; color: rgba(253,250,245,0.28); }
 
+        /* CALLED CELL — nummer getrokken door DJ */
+        .bingo-cell.called:not(.marked):not(.free) {
+            border-color: rgba(255,140,0,0.55);
+            background: rgba(255,140,0,0.07);
+            animation: calledPulse 1.1s ease-in-out infinite alternate;
+        }
+        @keyframes calledPulse {
+            from { box-shadow: 0 0 6px rgba(255,140,0,0.2); border-color: rgba(255,140,0,0.4); }
+            to   { box-shadow: 0 0 18px rgba(255,140,0,0.5); border-color: rgba(255,140,0,0.9); }
+        }
+        .bingo-cell.called:not(.marked):not(.free)::after {
+            content: '🎵';
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(16px, 3vw, 24px);
+            background: rgba(255,140,0,0.06);
+        }
+
+        /* DRAW STATUS BAR */
+        .draw-status {
+            background: var(--mid);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+            min-height: 44px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: border-color 300ms ease, background 300ms ease;
+        }
+        .draw-status.active {
+            border-color: rgba(255,140,0,0.35);
+            background: rgba(255,140,0,0.06);
+            color: var(--white);
+        }
+        .draw-label {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--orange); margin-right: 4px;
+        }
+        .draw-artist-sm { color: var(--muted); font-size: 12px; }
+
         /* RESPONSIVE */
         @media (max-width: 800px) {
             #nav { padding: 16px 24px; }
@@ -433,6 +477,8 @@
             <div class="bingo-letter">O</div>
         </div>
 
+        <div class="draw-status" id="draw-status">Wachten op het eerste nummer van de DJ…</div>
+
         <div class="bingo-grid" id="bingo-grid"></div>
 
         <div class="bingo-controls">
@@ -496,57 +542,50 @@
     <p class="footer-copy">© 2026 DJ Jakob — Est. '76. Alle rechten voorbehouden.</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ============================================================
-// SONGPOOL — pas hier de nummers aan
+// SUPABASE
 // ============================================================
-const SONGS = [
-    { artist: 'ABBA',              title: 'Dancing Queen' },
-    { artist: 'ABBA',              title: 'Voulez-Vous' },
-    { artist: 'ABBA',              title: 'Mamma Mia' },
-    { artist: 'Queen',             title: 'Bohemian Rhapsody' },
-    { artist: 'Queen',             title: "Don't Stop Me Now" },
-    { artist: 'Bon Jovi',          title: 'Living on a Prayer' },
-    { artist: 'Village People',    title: 'YMCA' },
-    { artist: 'Neil Diamond',      title: 'Sweet Caroline' },
-    { artist: 'Bonnie Tyler',      title: 'Total Eclipse' },
-    { artist: 'Toto',              title: 'Africa' },
-    { artist: 'A-ha',              title: 'Take On Me' },
-    { artist: 'Ricky Martin',      title: "Livin' La Vida Loca" },
-    { artist: 'Shakira',           title: "Hips Don't Lie" },
-    { artist: 'Daft Punk',         title: 'Get Lucky' },
-    { artist: 'Bruno Mars',        title: 'Uptown Funk' },
-    { artist: 'Justin Timberlake', title: "Can't Stop the Feeling" },
-    { artist: 'Pharrell Williams', title: 'Happy' },
-    { artist: 'Ed Sheeran',        title: 'Shape of You' },
-    { artist: 'The Weeknd',        title: 'Blinding Lights' },
-    { artist: 'Dua Lipa',          title: 'Levitating' },
-    { artist: 'Harry Styles',      title: 'As It Was' },
-    { artist: 'Miley Cyrus',       title: 'Flowers' },
-    { artist: 'Taylor Swift',      title: 'Shake It Off' },
-    { artist: 'Taylor Swift',      title: 'Anti-Hero' },
-    { artist: 'Avicii',            title: 'Wake Me Up' },
-    { artist: 'Martin Garrix',     title: 'Animals' },
-    { artist: 'Swedish House Mafia', title: "Don't You Worry Child" },
-    { artist: 'David Guetta',      title: 'Titanium' },
-    { artist: 'Snollebollekes',    title: 'Links Rechts' },
-    { artist: 'Danny Vera',        title: 'Rollercoaster' },
-    { artist: 'Bløf',              title: 'Zoutelande' },
-    { artist: 'Marco Borsato',     title: 'Binnen' },
-    { artist: 'Doe Maar',          title: 'Is Dit Alles' },
-    { artist: 'André Hazes',       title: 'Zij Gelooft in Mij' },
-    { artist: 'Benny Neyman',      title: 'Stil In Mij' },
-];
+const SUPABASE_URL = 'https://zweumhnigwyjfjuowzts.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ============================================================
-// BINGO LOGIC
+// BINGO STATE
 // ============================================================
-const GRID_SIZE = 5;
-const FREE_INDEX = 12; // midden (rij 2, kolom 2 — 0-indexed)
+const FREE_INDEX = 12;
 
-let card    = [];  // array van 25 songindices (null = FREE)
-let marked  = new Array(25).fill(false);
+let SONGS     = [];          // alle nummers uit Supabase
+let card      = [];          // 25 song-objecten (null = FREE)
+let marked    = new Array(25).fill(false);
+let calledIds = new Set();   // song-ids die al getrokken zijn
 
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+    const grid = document.getElementById('bingo-grid');
+    grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:48px 0;font-size:14px;">Playlist laden…</div>';
+
+    const { data, error } = await db.from('bingo_songs').select('*').order('artist').order('title');
+    SONGS = data || [];
+
+    if (SONGS.length < 24) {
+        grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:48px 0;font-size:14px;">Er zijn nog geen 24 nummers in de playlist.<br>Vraag de DJ om nummers toe te voegen in het dashboard.</div>';
+        return;
+    }
+
+    if (!laadOpgeslagen()) genereerKaart();
+
+    await laadGetrokkenNummers();
+    subscribeDraws();
+}
+
+// ============================================================
+// KAART
+// ============================================================
 function shuffle(arr) {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -560,8 +599,8 @@ function genereerKaart() {
     const picks = shuffle(SONGS).slice(0, 24);
     card = [];
     for (let i = 0; i < 25; i++) {
-        if (i === FREE_INDEX) { card.push(null); }
-        else { card.push(picks[i < FREE_INDEX ? i : i - 1]); }
+        if (i === FREE_INDEX) card.push(null);
+        else card.push(picks[i < FREE_INDEX ? i : i - 1]);
     }
     marked = new Array(25).fill(false);
     marked[FREE_INDEX] = true;
@@ -572,11 +611,13 @@ function genereerKaart() {
 function renderGrid() {
     const grid = document.getElementById('bingo-grid');
     grid.innerHTML = card.map((song, i) => {
-        const isFree    = i === FREE_INDEX;
-        const isMarked  = marked[i];
+        const isFree   = i === FREE_INDEX;
+        const isMarked = marked[i];
+        const isCalled = !isFree && song && calledIds.has(song.id);
         let cls = 'bingo-cell';
-        if (isFree)   cls += ' free';
+        if (isFree)        cls += ' free';
         else if (isMarked) cls += ' marked';
+        else if (isCalled) cls += ' called';
         const onclick = isFree ? '' : `onclick="toggleCell(${i})"`;
         return `
             <div class="${cls}" ${onclick} data-index="${i}">
@@ -602,15 +643,12 @@ function toggleCell(i) {
 }
 
 function checkBingo() {
-    // Rijen
     for (let r = 0; r < 5; r++) {
         if ([0,1,2,3,4].every(c => marked[r*5+c])) return true;
     }
-    // Kolommen
     for (let c = 0; c < 5; c++) {
         if ([0,1,2,3,4].every(r => marked[r*5+c])) return true;
     }
-    // Diagonalen
     if ([0,6,12,18,24].every(i => marked[i])) return true;
     if ([4,8,12,16,20].every(i => marked[i])) return true;
     return false;
@@ -619,7 +657,6 @@ function checkBingo() {
 function highlightWinLines() {
     const cells = document.querySelectorAll('.bingo-cell');
     const winCells = new Set();
-
     for (let r = 0; r < 5; r++) {
         const row = [0,1,2,3,4].map(c => r*5+c);
         if (row.every(i => marked[i])) row.forEach(i => winCells.add(i));
@@ -628,11 +665,9 @@ function highlightWinLines() {
         const col = [0,1,2,3,4].map(r => r*5+c);
         if (col.every(i => marked[i])) col.forEach(i => winCells.add(i));
     }
-    const d1 = [0,6,12,18,24];
-    const d2 = [4,8,12,16,20];
+    const d1 = [0,6,12,18,24], d2 = [4,8,12,16,20];
     if (d1.every(i => marked[i])) d1.forEach(i => winCells.add(i));
     if (d2.every(i => marked[i])) d2.forEach(i => winCells.add(i));
-
     winCells.forEach(i => cells[i].classList.add('win-line'));
 }
 
@@ -645,6 +680,8 @@ function nieuwKaart() {
         if (!confirm('Nieuw kaart aanmaken? Je huidige kaart gaat verloren.')) return;
     }
     genereerKaart();
+    // Re-apply called state op nieuwe kaart
+    renderGrid();
 }
 
 function resetKaart() {
@@ -664,23 +701,79 @@ function laadOpgeslagen() {
         const c = JSON.parse(sessionStorage.getItem('bingo-card'));
         const m = JSON.parse(sessionStorage.getItem('bingo-marked'));
         if (c && m && c.length === 25 && m.length === 25) {
-            card   = c;
-            marked = m;
-            renderGrid();
-            return true;
+            // Valideer: alle song-ids moeten in SONGS bestaan
+            const ids = new Set(SONGS.map(s => s.id));
+            const valid = c.every(song => song === null || ids.has(song.id));
+            if (valid) { card = c; marked = m; renderGrid(); return true; }
         }
     } catch (e) {}
     return false;
 }
 
+// ============================================================
+// REALTIME DRAWS
+// ============================================================
+async function laadGetrokkenNummers() {
+    const { data: sessions } = await db
+        .from('bingo_sessions').select('id')
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+    if (!sessions?.length) return;
+
+    const { data: draws } = await db
+        .from('bingo_draws').select('song_id, sequence, bingo_songs(title, artist)')
+        .eq('session_id', sessions[0].id)
+        .order('sequence');
+    if (!draws?.length) return;
+
+    draws.forEach(d => calledIds.add(d.song_id));
+    const last = draws[draws.length - 1];
+    toonDrawStatus(last.bingo_songs.title, last.bingo_songs.artist, draws.length);
+    renderGrid();
+}
+
+function toonDrawStatus(title, artist, seq) {
+    const el = document.getElementById('draw-status');
+    el.innerHTML = `<span class="draw-label">Nu gespeeld (${seq}):</span> <strong>${escHtml(title)}</strong> <span class="draw-artist-sm">— ${escHtml(artist)}</span>`;
+    el.classList.add('active');
+}
+
+function subscribeDraws() {
+    db.channel('bingo-player')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bingo_draws' }, async (payload) => {
+            const { data } = await db
+                .from('bingo_draws').select('song_id, sequence, bingo_songs(title, artist)')
+                .eq('id', payload.new.id).single();
+            if (data) {
+                calledIds.add(data.song_id);
+                toonDrawStatus(data.bingo_songs.title, data.bingo_songs.artist, data.sequence);
+                renderGrid();
+            }
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bingo_sessions' }, () => {
+            // Nieuw spel gestart — reset called state
+            calledIds.clear();
+            document.getElementById('draw-status').textContent = 'Nieuw spel gestart — wachten op het eerste nummer…';
+            document.getElementById('draw-status').classList.remove('active');
+            renderGrid();
+        })
+        .subscribe();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
 function escHtml(str) {
     return String(str)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;')
         .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Init
-if (!laadOpgeslagen()) genereerKaart();
+// ============================================================
+// START
+// ============================================================
+init();
 
 // Nav scroll
 const nav = document.getElementById('nav');
