@@ -69,7 +69,6 @@
 
         /* ========== MAIN LAYOUT ========== */
         #app {
-            display: none;
             height: 100vh;
             grid-template-columns: 1fr 320px;
             grid-template-rows: auto 1fr;
@@ -427,10 +426,14 @@
 
         if (activeSessie) {
             const { data: draws } = await db
-                .from('bingo_draws').select('*, bingo_songs(*)')
+                .from('bingo_draws').select('*')
                 .eq('session_id', activeSessie.id)
                 .order('sequence');
-            drawnSongs = draws || [];
+            // Enrich met song-data uit allSongs (geen join nodig)
+            drawnSongs = (draws || []).map(d => ({
+                ...d,
+                bingo_songs: allSongs.find(s => s.id === d.song_id) || { title: '?', artist: '?' }
+            }));
         } else {
             drawnSongs = [];
         }
@@ -472,12 +475,13 @@
             session_id: activeSessie.id,
             song_id:    song.id,
             sequence:   seq
-        }).select('*, bingo_songs(*)').single();
+        }).select().single();
 
         document.getElementById('btn-trek').disabled = false;
 
-        if (error) { console.error(error); return; }
-        drawnSongs.push(data);
+        if (error) { console.error(error); showToast('Fout bij opslaan — probeer opnieuw'); return; }
+        // Voeg song-data lokaal toe (geen join nodig)
+        drawnSongs.push({ ...data, bingo_songs: song });
         renderState();
     }
 
@@ -507,25 +511,27 @@
         document.getElementById('pct').textContent           = pct;
         document.getElementById('progress-fill').style.width = pct + '%';
 
-        // Trek knop
+        // Trek knop — uitgeschakeld als alle nummers getrokken zijn
         const btn = document.getElementById('btn-trek');
-        btn.disabled = remaining === 0;
+        btn.disabled = total > 0 && activeSessie && remaining === 0;
 
         // Main display
         const display = document.getElementById('draw-display');
         if (drawn > 0) {
             const last = drawnSongs[drawn - 1];
-            const song = last.bingo_songs;
+            const song = last.bingo_songs || {};
             display.classList.remove('show');
-            void display.offsetWidth; // force reflow voor animatie
+            void display.offsetWidth;
             display.innerHTML = `
                 <div class="draw-num-big">Nummer ${last.sequence}</div>
-                <div class="draw-title-big">${escHtml(song.title)}</div>
-                <div class="draw-artist-big">${escHtml(song.artist)}</div>`;
+                <div class="draw-title-big">${escHtml(song.title || '—')}</div>
+                <div class="draw-artist-big">${escHtml(song.artist || '')}</div>`;
             requestAnimationFrame(() => display.classList.add('show'));
         } else {
             display.classList.remove('show');
-            display.innerHTML = '<p class="draw-empty-big">Druk op "Trek nummer" om te beginnen</p>';
+            display.innerHTML = total === 0
+                ? '<p class="draw-empty-big" style="font-size:14px;color:rgba(253,250,245,0.35)">Voeg eerst nummers toe via het dashboard</p>'
+                : '<p class="draw-empty-big">Druk op "Trek nummer" om te beginnen</p>';
         }
 
         // Sidebar history (nieuwste bovenaan)
