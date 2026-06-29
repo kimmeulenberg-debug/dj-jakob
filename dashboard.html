@@ -490,6 +490,53 @@
         }
         .btn-del-song:hover { color: var(--pink); }
 
+        /* IMPORT */
+        .import-toggle {
+            background: none; border: none; color: rgba(0,212,255,0.5);
+            font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; cursor: pointer; padding: 10px 0 0;
+            transition: color 200ms ease; display: block;
+        }
+        .import-toggle:hover { color: var(--cyan); }
+        .import-box {
+            display: none; margin-top: 12px;
+            background: rgba(0,212,255,0.03);
+            border: 1px solid rgba(0,212,255,0.12);
+            border-radius: 4px; padding: 14px;
+        }
+        .import-box.open { display: block; }
+        .import-hint {
+            font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.6;
+        }
+        .import-hint code {
+            display: block; background: rgba(255,255,255,0.05);
+            padding: 6px 10px; border-radius: 3px; margin-top: 6px;
+            font-family: monospace; font-size: 11px; color: var(--cyan);
+        }
+        .import-textarea {
+            width: 100%; min-height: 120px; resize: vertical;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(0,212,255,0.15); border-radius: 3px;
+            color: var(--white); font-family: 'Inter', sans-serif;
+            font-size: 13px; padding: 10px 12px; outline: none;
+            transition: border-color 200ms ease; line-height: 1.5;
+        }
+        .import-textarea::placeholder { color: rgba(253,250,245,0.2); }
+        .import-textarea:focus { border-color: rgba(0,212,255,0.4); }
+        .import-actions { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+        .btn-import {
+            background: var(--cyan); color: var(--dark); border: none;
+            padding: 10px 20px; font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; cursor: pointer; border-radius: 3px;
+            transition: background 200ms ease; white-space: nowrap;
+        }
+        .btn-import:hover { background: #00bce0; }
+        .btn-import:disabled { background: rgba(0,212,255,0.2); cursor: default; color: rgba(10,10,26,0.4); }
+        .import-status { font-size: 12px; color: var(--muted); }
+        .import-status.ok  { color: #00E676; }
+        .import-status.err { color: var(--pink); }
+
         /* RESPONSIVE */
         @media (max-width: 600px) {
             .dash-header { padding: 14px 20px; }
@@ -603,6 +650,21 @@
                 <input class="pl-input" id="new-artist" placeholder="Artiest" type="text" onkeydown="if(event.key==='Enter')addSong()">
                 <input class="pl-input" id="new-title"  placeholder="Liedje"  type="text" onkeydown="if(event.key==='Enter')addSong()">
                 <button class="btn-add-song" onclick="addSong()">+ Toevoegen</button>
+            </div>
+
+            <button class="import-toggle" onclick="toggleImport()">▼ Importeer lijst (plakken)</button>
+            <div class="import-box" id="import-box">
+                <p class="import-hint">
+                    Plak hieronder je nummers — één per regel, artiest en titel gescheiden door een streepje:
+                    <code>ABBA - Dancing Queen
+Queen - Bohemian Rhapsody
+Bon Jovi - Living on a Prayer</code>
+                </p>
+                <textarea class="import-textarea" id="import-textarea" placeholder="Artiest - Liedje"></textarea>
+                <div class="import-actions">
+                    <button class="btn-import" id="btn-import" onclick="importeerLijst()">↑ Importeer</button>
+                    <span class="import-status" id="import-status"></span>
+                </div>
             </div>
 
             <p class="playlist-count" id="playlist-count">Laden...</p>
@@ -891,6 +953,68 @@
         if (error) { console.error(error); return; }
         document.getElementById('new-artist').value = '';
         document.getElementById('new-title').value  = '';
+        await loadPlaylist();
+    }
+
+    function toggleImport() {
+        const box = document.getElementById('import-box');
+        const btn = document.querySelector('.import-toggle');
+        const open = box.classList.toggle('open');
+        btn.textContent = (open ? '▲' : '▼') + ' Importeer lijst (plakken)';
+    }
+
+    async function importeerLijst() {
+        const textarea = document.getElementById('import-textarea');
+        const status   = document.getElementById('import-status');
+        const btn      = document.getElementById('btn-import');
+
+        const regels = textarea.value
+            .split('\n')
+            .map(r => r.trim())
+            .filter(r => r.length > 0);
+
+        if (regels.length === 0) {
+            status.textContent = 'Geen nummers gevonden';
+            status.className = 'import-status err';
+            return;
+        }
+
+        // Parseer elke regel: "Artiest - Titel"
+        const nummers = [];
+        const fouten  = [];
+        regels.forEach((r, i) => {
+            const idx = r.indexOf(' - ');
+            if (idx === -1) { fouten.push(i + 1); return; }
+            const artist = r.slice(0, idx).trim();
+            const title  = r.slice(idx + 3).trim();
+            if (artist && title) nummers.push({ artist, title });
+            else fouten.push(i + 1);
+        });
+
+        if (nummers.length === 0) {
+            status.textContent = 'Geen geldige regels — gebruik "Artiest - Liedje"';
+            status.className = 'import-status err';
+            return;
+        }
+
+        btn.disabled = true;
+        status.textContent = `${nummers.length} nummers importeren…`;
+        status.className = 'import-status';
+
+        const { error } = await db.from('bingo_songs').insert(nummers);
+        btn.disabled = false;
+
+        if (error) {
+            status.textContent = 'Fout bij importeren — probeer opnieuw';
+            status.className = 'import-status err';
+            console.error(error);
+            return;
+        }
+
+        const foutTekst = fouten.length > 0 ? ` (${fouten.length} regel(s) overgeslagen)` : '';
+        status.textContent = `✓ ${nummers.length} nummers toegevoegd${foutTekst}`;
+        status.className = 'import-status ok';
+        textarea.value = '';
         await loadPlaylist();
     }
 
