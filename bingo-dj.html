@@ -104,7 +104,8 @@
             align-items: center; justify-content: center;
             padding: 48px 64px;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         .dj-main::before {
             content: '';
@@ -438,6 +439,7 @@
     let allSongs     = [];
     let activeSessie = null;
     let drawnSongs   = [];
+    let isDrawing    = false;
 
     async function openApp() {
         document.getElementById('pin-screen').style.display = 'none';
@@ -492,39 +494,58 @@
     }
 
     async function drawSong() {
-        if (!activeSessie) { await startNieuwSpel(); return; }
-
-        const drawnIds = drawnSongs.map(d => d.song_id);
-        const pool     = allSongs.filter(s => !drawnIds.includes(s.id));
-
-        if (pool.length === 0) {
-            showToast('Alle nummers zijn getrokken — start een nieuw spel!');
-            return;
-        }
-
-        const song = pool[Math.floor(Math.random() * pool.length)];
-        const seq  = drawnSongs.length + 1;
-
+        if (isDrawing) return;
+        isDrawing = true;
         document.getElementById('btn-trek').disabled = true;
 
-        const { data, error } = await db.from('bingo_draws').insert({
-            session_id: activeSessie.id,
-            song_id:    song.id,
-            sequence:   seq
-        }).select().single();
+        try {
+            if (!activeSessie) { await startNieuwSpel(); return; }
 
-        document.getElementById('btn-trek').disabled = false;
+            const drawnIds = drawnSongs.map(d => d.song_id);
+            const pool     = allSongs.filter(s => !drawnIds.includes(s.id));
 
-        if (error) { console.error(error); showToast('Fout bij opslaan — probeer opnieuw'); return; }
-        // Voeg song-data lokaal toe (geen join nodig)
-        drawnSongs.push({ ...data, bingo_songs: song });
-        renderState();
+            if (pool.length === 0) {
+                showToast('Alle nummers zijn getrokken — start een nieuw spel!');
+                return;
+            }
+
+            const song = pool[Math.floor(Math.random() * pool.length)];
+            const seq  = drawnSongs.length + 1;
+
+            const { data, error } = await db.from('bingo_draws').insert({
+                session_id: activeSessie.id,
+                song_id:    song.id,
+                sequence:   seq
+            }).select().single();
+
+            if (error) { console.error(error); showToast('Fout bij opslaan — probeer opnieuw'); return; }
+
+            // Voeg alleen toe als dit draw-id nog niet in de lijst staat (dedup-guard)
+            if (!drawnSongs.find(d => d.id === data.id)) {
+                drawnSongs.push({ ...data, bingo_songs: song });
+            }
+            renderState();
+        } finally {
+            isDrawing = false;
+            // Zorg dat de knop altijd terugkomt (ook bij fout); renderState corrigeert indien nodig
+            const remaining = allSongs.length - drawnSongs.length;
+            document.getElementById('btn-trek').disabled =
+                allSongs.length > 0 && activeSessie && remaining === 0;
+        }
     }
 
     // ============================================================
     // RENDER
     // ============================================================
     function renderState() {
+        // Dedup drawnSongs op id (vangt eventuele race conditions op)
+        const seenIds = new Set();
+        drawnSongs = drawnSongs.filter(d => {
+            if (seenIds.has(d.id)) return false;
+            seenIds.add(d.id);
+            return true;
+        });
+
         const total     = allSongs.length;
         const drawn     = drawnSongs.length;
         const remaining = total - drawn;
