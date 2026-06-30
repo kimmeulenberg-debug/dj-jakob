@@ -664,12 +664,14 @@
             <button class="import-toggle" onclick="toggleImport()">▼ Importeer lijst (plakken)</button>
             <div class="import-box" id="import-box">
                 <p class="import-hint">
-                    Plak hieronder je nummers — één per regel, artiest en titel gescheiden door een streepje:
+                    Twee formaten worden herkend:<br>
+                    <strong style="color:var(--cyan)">Exportify CSV</strong> — plak de hele inhoud van het Exportify-bestand (inclusief Spotify links):<br>
+                    <code>spotify:track:4uLU6hMCjMI75M1A2tKUQC,"Dancing Queen","Arrival","ABBA",...</code>
+                    <strong style="color:var(--muted)">Of de eenvoudige lijst:</strong>
                     <code>ABBA - Dancing Queen
-Queen - Bohemian Rhapsody
-Bon Jovi - Living on a Prayer</code>
+Queen - Bohemian Rhapsody</code>
                 </p>
-                <textarea class="import-textarea" id="import-textarea" placeholder="Artiest - Liedje"></textarea>
+                <textarea class="import-textarea" id="import-textarea" placeholder="Plak hier je Exportify CSV of Artiest - Liedje lijst…" style="min-height:160px"></textarea>
                 <div class="import-actions">
                     <button class="btn-import" id="btn-import" onclick="importeerLijst()">↑ Importeer</button>
                     <span class="import-status" id="import-status"></span>
@@ -975,6 +977,24 @@ Bon Jovi - Living on a Prayer</code>
         btn.textContent = (open ? '▲' : '▼') + ' Importeer lijst (plakken)';
     }
 
+    function parseCSVRegel(line) {
+        const fields = [];
+        let field = '', inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') { field += '"'; i++; }
+                else inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+                fields.push(field.trim()); field = '';
+            } else {
+                field += ch;
+            }
+        }
+        fields.push(field.trim());
+        return fields;
+    }
+
     async function importeerLijst() {
         const textarea = document.getElementById('import-textarea');
         const status   = document.getElementById('import-status');
@@ -991,20 +1011,39 @@ Bon Jovi - Living on a Prayer</code>
             return;
         }
 
-        // Parseer elke regel: "Artiest - Titel"
         const nummers = [];
         const fouten  = [];
-        regels.forEach((r, i) => {
-            const idx = r.indexOf(' - ');
-            if (idx === -1) { fouten.push(i + 1); return; }
-            const artist = r.slice(0, idx).trim();
-            const title  = r.slice(idx + 3).trim();
-            if (artist && title) nummers.push({ artist, title });
-            else fouten.push(i + 1);
-        });
+
+        // Auto-detect: Exportify CSV of "Artiest - Liedje"
+        const eersteRegel = regels[0].toLowerCase();
+        const isCSV = eersteRegel.startsWith('spotify:track:') ||
+                      eersteRegel.startsWith('"spotify:track:') ||
+                      eersteRegel.startsWith('track uri');
+
+        if (isCSV) {
+            regels.forEach((r, i) => {
+                if (r.toLowerCase().startsWith('track uri')) return; // sla header over
+                const f = parseCSVRegel(r);
+                if (f.length < 4) { fouten.push(i + 1); return; }
+                const spotify_uri = f[0];
+                const title       = f[1];
+                const artist      = f[3].split(';')[0].trim();
+                if (artist && title) nummers.push({ artist, title, spotify_uri });
+                else fouten.push(i + 1);
+            });
+        } else {
+            regels.forEach((r, i) => {
+                const idx = r.indexOf(' - ');
+                if (idx === -1) { fouten.push(i + 1); return; }
+                const artist = r.slice(0, idx).trim();
+                const title  = r.slice(idx + 3).trim();
+                if (artist && title) nummers.push({ artist, title });
+                else fouten.push(i + 1);
+            });
+        }
 
         if (nummers.length === 0) {
-            status.textContent = 'Geen geldige regels — gebruik "Artiest - Liedje"';
+            status.textContent = isCSV ? 'Geen geldige CSV-regels gevonden' : 'Gebruik "Artiest - Liedje" per regel';
             status.className = 'import-status err';
             return;
         }
@@ -1023,8 +1062,10 @@ Bon Jovi - Living on a Prayer</code>
             return;
         }
 
-        const foutTekst = fouten.length > 0 ? ` (${fouten.length} regel(s) overgeslagen)` : '';
-        status.textContent = `✓ ${nummers.length} nummers toegevoegd${foutTekst}`;
+        const metUri    = isCSV ? nummers.filter(n => n.spotify_uri).length : 0;
+        const foutTekst = fouten.length > 0 ? ` (${fouten.length} overgeslagen)` : '';
+        const uriTekst  = metUri > 0 ? ` — ${metUri} met Spotify link` : '';
+        status.textContent = `✓ ${nummers.length} nummers toegevoegd${uriTekst}${foutTekst}`;
         status.className = 'import-status ok';
         textarea.value = '';
         await loadPlaylist();
