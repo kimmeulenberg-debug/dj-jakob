@@ -378,14 +378,17 @@
     // Hamburger menu
     const hamburger  = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenu.style.display = 'none';
     hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('open');
-        mobileMenu.classList.toggle('open');
+        const open = hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open', open);
+        mobileMenu.style.display = open ? 'flex' : 'none';
     });
     mobileMenu.querySelectorAll('a').forEach(a => {
         a.addEventListener('click', () => {
             hamburger.classList.remove('open');
             mobileMenu.classList.remove('open');
+            mobileMenu.style.display = 'none';
         });
     });
 
