@@ -123,12 +123,17 @@
             text-transform: uppercase; color: var(--muted); margin-bottom: 20px;
         }
         .preview-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .page-pair {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 24px;
         }
         .no-cards {
-            grid-column: 1/-1;
+            text-align: center;
             text-align: center; padding: 64px 0;
             font-size: 14px; color: rgba(253,250,245,0.2);
         }
@@ -220,21 +225,26 @@
             .preview-label { display: none !important; }
             .preview-area { margin: 0; padding: 0; max-width: 100%; }
 
-            .preview-grid {
+            /* Elke page-pair (2 kaarten) → nieuwe pagina */
+            .page-pair {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 6mm;
+                break-after: page;
+                page-break-after: always;
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
-
-            /* Elke 2 kaarten → nieuwe pagina */
-            .bingo-card:nth-child(2n+1) { break-before: auto; }
-            .bingo-card:nth-child(2n) { break-after: page; }
-            .bingo-card:last-child { break-after: avoid; }
+            .page-pair:last-child {
+                break-after: auto;
+                page-break-after: auto;
+            }
 
             .bingo-card {
                 box-shadow: none;
                 border: 1px solid #ccc;
                 break-inside: avoid;
+                page-break-inside: avoid;
             }
         }
 
@@ -416,9 +426,11 @@
         grid.innerHTML = '';
         label.textContent = `${aantal} unieke kaarten — voorbeeld`;
 
-        for (let k = 1; k <= aantal; k++) {
-            const card = maakKaart();
-            grid.insertAdjacentHTML('beforeend', renderKaart(card, k));
+        // Groepeer kaarten per 2 in een page-pair wrapper voor betrouwbare pagina-afbrekingen bij printen
+        for (let k = 1; k <= aantal; k += 2) {
+            const kaart1 = renderKaart(maakKaart(), k);
+            const kaart2 = k + 1 <= aantal ? renderKaart(maakKaart(), k + 1) : '';
+            grid.insertAdjacentHTML('beforeend', `<div class="page-pair">${kaart1}${kaart2}</div>`);
         }
 
         document.getElementById('btn-print').disabled = false;
