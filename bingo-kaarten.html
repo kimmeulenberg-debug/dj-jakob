@@ -292,17 +292,18 @@
             .bl { font-size: 14px; padding: 3px 0; }
 
             /*
-             * Kaartgrid: aspect-ratio:1 maakt het grid vierkant (breedte = hoogte).
-             * Kaartbreedte = (194mm - 5mm gap) / 2 = 94.5mm → grid wordt ~94mm × 94mm.
-             * grid-auto-rows:1fr verdeelt de hoogte gelijk over 5 rijen → vierkante cellen.
+             * Kaartgrid: aspect-ratio:1 maakt het grid vierkant.
+             * Borders op cellen i.p.v. background+gap — browsers drukken borders
+             * altijd af, ook als "Achtergronden afdrukken" uitstaat.
              */
             .card-grid {
                 flex-shrink: 0;
                 width: 100%;
                 aspect-ratio: 1;
-                gap: 1.5px;
-                padding: 1.5px;
-                background: #ccc;
+                gap: 0;
+                padding: 0;
+                background: transparent;
+                border: 1.5px solid #444;
                 overflow: hidden;
                 grid-auto-rows: 1fr;
                 min-width: 0;
@@ -313,6 +314,7 @@
                 min-width: 0;
                 overflow: hidden;
                 padding: 2px 1px;
+                border: 1px solid #666;
             }
             .cc-artist { font-size: 5px; }
             .cc-title  { font-size: 8px; }
