@@ -125,17 +125,16 @@
         .preview-grid {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 32px;
         }
-        .page-pair {
+        /* 4 kaarten per pagina: 2×2 grid zowel op scherm als in print */
+        .page-quad {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            /* Voorkom dat kaarten buiten hun kolom groeien */
+            gap: 20px;
             min-width: 0;
         }
         .no-cards {
-            text-align: center;
             text-align: center; padding: 64px 0;
             font-size: 14px; color: rgba(253,250,245,0.2);
         }
@@ -230,7 +229,7 @@
 
         /* ========== PRINT ========== */
         @media print {
-            @page { size: A4 portrait; margin: 10mm; }
+            @page { size: A4 portrait; margin: 8mm; }
 
             body { background: #fff !important; color: #000 !important; }
             #pin-screen { display: none !important; }
@@ -241,55 +240,63 @@
             .preview-area { margin: 0; padding: 0; max-width: 100%; }
             .preview-grid { gap: 0; }
 
-            /* Elke page-pair vult exact één A4-pagina (297mm − 2×10mm = 277mm hoog) */
-            .page-pair {
-                width: 190mm;
-                height: 277mm;
+            /* 4 kaarten per pagina: 2 kolommen × 2 rijen, kaarten auto-hoogte */
+            .page-quad {
+                width: 194mm;          /* 210mm − 2×8mm marge */
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
-                gap: 5mm;
-                align-items: stretch;
+                gap: 4mm;
+                align-items: start;    /* kaarten strekken NIET — hoogte volgt inhoud */
                 break-after: page;
                 page-break-after: always;
                 break-inside: avoid;
                 page-break-inside: avoid;
-                overflow: hidden;
             }
-            .page-pair:last-child {
+            .page-quad:last-child {
                 break-after: auto;
                 page-break-after: auto;
             }
 
-            /* Kaart vult zijn cel volledig */
             .bingo-card {
                 box-shadow: none;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
+                border: 1px solid #aaa;
+                border-radius: 3px;
                 overflow: hidden;
+                min-width: 0;
+                width: 100%;
                 break-inside: avoid;
                 page-break-inside: avoid;
             }
 
-            /* Grid vult resterende hoogte, rijen worden gelijkmatig verdeeld */
-            .card-grid {
-                flex: 1;
-                min-height: 0;
-                grid-auto-rows: 1fr;
-            }
+            /* Compactere header/letters/footer zodat meer ruimte voor de cellen overblijft */
+            .card-header  { padding: 5px 8px; }
+            .card-logo    { height: 20px; width: 20px; }
+            .card-brand-name { font-size: 13px; }
+            .card-num     { font-size: 7px; }
+            .bl           { font-size: 15px; padding: 3px 0; }
+            .card-footer  { padding: 4px 8px; }
+            .card-footer-url, .card-footer-kaart { font-size: 7px; }
 
-            /* Cellen mogen niet langer vierkant zijn — hoogte volgt de rij */
-            .card-cell {
-                aspect-ratio: unset !important;
-                min-height: 0;
+            /* Cellen blijven vierkant via aspect-ratio */
+            .card-grid {
+                gap: 1.5px;
+                padding: 1.5px;
+                min-width: 0;
+                overflow: hidden;
             }
+            .card-cell {
+                aspect-ratio: 1;
+                padding: 2px 1px;
+                min-width: 0;
+                overflow: hidden;
+            }
+            .cc-artist { font-size: 5px; }
+            .cc-title  { font-size: 8px; }
         }
 
         @media (max-width: 600px) {
             .controls-bar { flex-direction: column; align-items: stretch; }
-            .preview-grid { grid-template-columns: 1fr; }
+            .page-quad { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -465,11 +472,13 @@
         grid.innerHTML = '';
         label.textContent = `${aantal} unieke kaarten — voorbeeld`;
 
-        // Groepeer kaarten per 2 in een page-pair wrapper voor betrouwbare pagina-afbrekingen bij printen
-        for (let k = 1; k <= aantal; k += 2) {
-            const kaart1 = renderKaart(maakKaart(), k);
-            const kaart2 = k + 1 <= aantal ? renderKaart(maakKaart(), k + 1) : '';
-            grid.insertAdjacentHTML('beforeend', `<div class="page-pair">${kaart1}${kaart2}</div>`);
+        // Groepeer kaarten per 4 in een page-quad wrapper (2×2 per A4-pagina)
+        for (let k = 1; k <= aantal; k += 4) {
+            let cards = '';
+            for (let i = k; i < k + 4 && i <= aantal; i++) {
+                cards += renderKaart(maakKaart(), i);
+            }
+            grid.insertAdjacentHTML('beforeend', `<div class="page-quad">${cards}</div>`);
         }
 
         document.getElementById('btn-print').disabled = false;
