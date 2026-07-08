@@ -115,9 +115,9 @@
         .hero-bg {
             position: absolute;
             inset: 0;
-            background-image: url('https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1920&q=85');
+            background-image: url('./img/dj-jakob-portret.jpg');
             background-size: cover;
-            background-position: center 35%;
+            background-position: center 20%;
             z-index: 0;
         }
         .hero-overlay {
@@ -260,6 +260,105 @@
         }
         .neon-line-pink {
             background: linear-gradient(90deg, transparent, var(--pink), transparent);
+        }
+
+        /* === OVER DJ JAKOB === */
+        #over {
+            background: var(--dark);
+            padding: 96px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        #over::before {
+            content: '';
+            position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--pink), transparent);
+        }
+        .over-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            max-width: var(--max);
+            margin: 0 auto;
+            align-items: center;
+        }
+        .over-text { }
+        .over-text .section-title { margin-top: 6px; }
+        .over-body {
+            font-size: 16px;
+            line-height: 1.78;
+            color: var(--muted);
+            margin-top: 20px;
+        }
+        .over-body strong { color: var(--white); font-weight: 600; }
+        .over-cta {
+            display: inline-block;
+            margin-top: 32px;
+            background: transparent;
+            color: var(--pink);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            padding: 13px 28px;
+            border: 1.5px solid var(--pink);
+            box-shadow: 0 0 16px rgba(255,0,102,0.18);
+            transition: background 200ms ease, box-shadow 200ms ease, color 200ms ease;
+        }
+        .over-cta:hover {
+            background: var(--pink);
+            color: var(--white);
+            box-shadow: 0 0 28px rgba(255,0,102,0.45);
+        }
+        .over-photos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 10px;
+        }
+        .over-photo-main {
+            grid-column: 1 / -1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+        .over-photo-detail {
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+        .over-photo-main img,
+        .over-photo-detail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.90) saturate(1.10);
+            transition: transform 500ms ease, filter 500ms ease;
+        }
+        .over-photo-main { height: 340px; }
+        .over-photo-detail { height: 180px; }
+        .over-photo-main:hover img,
+        .over-photo-detail:hover img {
+            transform: scale(1.04);
+            filter: brightness(0.98) saturate(1.20);
+        }
+        /* Neon accent lijn op foto */
+        .over-photo-main::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--pink), var(--cyan));
+        }
+
+        @media (max-width: 800px) {
+            #over { padding: 72px 24px; }
+            .over-inner { grid-template-columns: 1fr; gap: 40px; }
+            .over-photos { order: -1; }
+            .over-photo-main { height: 260px; }
+            .over-photo-detail { height: 140px; }
         }
 
         /* === DIENSTEN === */
@@ -722,6 +821,37 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M12 5v14M5 12l7 7 7-7"/>
         </svg>
+    </div>
+</section>
+
+<!-- OVER DJ JAKOB -->
+<section id="over">
+    <div class="over-inner">
+
+        <div class="over-text fi">
+            <span class="label">Wie is DJ Jakob?</span>
+            <h2 class="section-title">Muziek is mijn passie.<br><em style="font-style:normal;color:var(--pink)">Jouw feest is mijn podium.</em></h2>
+            <p class="over-body">
+                Al meer dan 25 jaar staat Jakob achter de draaitafels. Van knallende bruiloften tot intieme verjaarsdagsfeesten — hij leest de zaal, voelt de sfeer en bouwt een set die mensen de hele avond op de dansvloer houdt.
+            </p>
+            <p class="over-body" style="margin-top:12px;">
+                <strong>Geen standaard lijstjes.</strong> Elke avond is anders, elk publiek verdient een eigen aanpak. Jakob combineert decennia aan ervaring met een scherp gevoel voor het moment — en zorgt dat jouw feest klinkt zoals jij het had gedroomd.
+            </p>
+            <a href="#contact" class="over-cta">Boek een gesprek</a>
+        </div>
+
+        <div class="over-photos fi d2">
+            <div class="over-photo-main">
+                <img src="./img/dj-jakob-live.jpg" alt="DJ Jakob in actie">
+            </div>
+            <div class="over-photo-detail">
+                <img src="./img/dj-jakob-controller.jpg" alt="DJ controller detail" style="object-position: center 30%;">
+            </div>
+            <div class="over-photo-detail">
+                <img src="./img/dj-jakob-portret.jpg" alt="DJ Jakob portret" style="object-position: center top;">
+            </div>
+        </div>
+
     </div>
 </section>
 
