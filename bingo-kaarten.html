@@ -224,27 +224,51 @@
             .controls-bar { display: none !important; }
             .preview-label { display: none !important; }
             .preview-area { margin: 0; padding: 0; max-width: 100%; }
+            .preview-grid { gap: 0; }
 
-            /* Elke page-pair (2 kaarten) → nieuwe pagina */
+            /* Elke page-pair vult exact één A4-pagina (297mm − 2×10mm = 277mm hoog) */
             .page-pair {
+                width: 190mm;
+                height: 277mm;
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
-                gap: 6mm;
+                gap: 5mm;
+                align-items: stretch;
                 break-after: page;
                 page-break-after: always;
                 break-inside: avoid;
                 page-break-inside: avoid;
+                overflow: hidden;
             }
             .page-pair:last-child {
                 break-after: auto;
                 page-break-after: auto;
             }
 
+            /* Kaart vult zijn cel volledig */
             .bingo-card {
                 box-shadow: none;
                 border: 1px solid #ccc;
+                border-radius: 4px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
                 break-inside: avoid;
                 page-break-inside: avoid;
+            }
+
+            /* Grid vult resterende hoogte, rijen worden gelijkmatig verdeeld */
+            .card-grid {
+                flex: 1;
+                min-height: 0;
+                grid-auto-rows: 1fr;
+            }
+
+            /* Cellen mogen niet langer vierkant zijn — hoogte volgt de rij */
+            .card-cell {
+                aspect-ratio: unset !important;
+                min-height: 0;
             }
         }
 
