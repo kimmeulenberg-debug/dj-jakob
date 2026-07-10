@@ -254,7 +254,7 @@
              */
             .page-quad {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
                 gap: 5mm;
                 align-items: start;
                 width: 194mm;
@@ -298,7 +298,8 @@
              */
             .card-grid {
                 flex-shrink: 0;
-                width: 100%;
+                width: min(100%, 120mm);
+                margin: 0 auto;
                 aspect-ratio: 1;
                 gap: 0;
                 padding: 0;
@@ -501,10 +502,10 @@
         grid.innerHTML = '';
         label.textContent = `${aantal} unieke kaarten — voorbeeld`;
 
-        // Groepeer kaarten per 4 in een page-quad wrapper (2×2 per A4-pagina)
-        for (let k = 1; k <= aantal; k += 4) {
+        // Groepeer kaarten per 2 in een page-quad wrapper (2 per A4-pagina)
+        for (let k = 1; k <= aantal; k += 2) {
             let cards = '';
-            for (let i = k; i < k + 4 && i <= aantal; i++) {
+            for (let i = k; i < k + 2 && i <= aantal; i++) {
                 cards += renderKaart(maakKaart(), i);
             }
             grid.insertAdjacentHTML('beforeend', `<div class="page-quad">${cards}</div>`);
