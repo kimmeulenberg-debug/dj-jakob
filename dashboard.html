@@ -452,6 +452,15 @@
             transition: all 200ms ease;
         }
         .btn-spotify-dash:hover { background: rgba(30,215,96,0.18); border-color: rgba(30,215,96,0.5); }
+        .btn-spotify-open {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            margin-top: 8px; padding: 9px 16px; border-radius: 500px;
+            background: #1ED760; color: #000; text-decoration: none;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+            transition: background 150ms ease, transform 150ms ease;
+        }
+        .btn-spotify-open:hover { background: #1fdf64; transform: scale(1.02); }
+        .btn-spotify-open svg { flex-shrink: 0; }
         .draw-history { margin-top: 24px; }
         .draw-history-label {
             font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
@@ -1204,11 +1213,20 @@ Queen - Bohemian Rhapsody</code>
             spotifySection.style.display = 'block';
             if (song.spotify_uri && song.spotify_uri.startsWith('spotify:track:')) {
                 const trackId = song.spotify_uri.split(':')[2];
-                spotifyContainer.innerHTML = `<iframe
-                    src="https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0"
-                    width="100%" height="80" frameborder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy" style="border-radius:8px;display:block;"></iframe>`;
+                spotifyContainer.innerHTML = `
+                    <iframe
+                        src="https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0"
+                        width="100%" height="80" frameborder="0"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy" style="border-radius:8px;display:block;"></iframe>
+                    <a class="btn-spotify-open"
+                        href="https://open.spotify.com/track/${trackId}"
+                        target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 0 1-.277-1.215c3.809-.87 7.076-.496 9.712 1.115a.623.623 0 0 1 .207.857zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.973-.519.781.781 0 0 1 .52-.973c3.632-1.102 8.147-.568 11.233 1.329a.78.78 0 0 1 .257 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.937.937 0 1 1-.543-1.794c3.532-1.073 9.404-.866 13.115 1.338a.937.937 0 0 1-.955 1.613z"/>
+                        </svg>
+                        Openen in Spotify
+                    </a>`;
             } else {
                 const q = encodeURIComponent((song.artist || '') + ' ' + (song.title || ''));
                 spotifyContainer.innerHTML = `<a class="btn-spotify-dash"
