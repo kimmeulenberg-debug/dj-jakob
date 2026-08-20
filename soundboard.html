@@ -532,7 +532,7 @@ async function loadButtons() {
 }
 
 function applyRow(row) {
-    const { publicUrl } = db.storage.from(BUCKET).getPublicUrl(row.file_path);
+    const { data: { publicUrl } } = db.storage.from(BUCKET).getPublicUrl(row.file_path);
     const audio = new Audio(publicUrl);
     audio.volume = row.volume;
     audio.loop = row.loop;
@@ -737,7 +737,7 @@ async function saveButton() {
         delete state[slot];
 
         // Maak nieuw audio object
-        const { publicUrl } = db.storage.from(BUCKET).getPublicUrl(filePath);
+        const { data: { publicUrl } } = db.storage.from(BUCKET).getPublicUrl(filePath);
         const audio = new Audio(publicUrl);
         audio.volume = volume;
         audio.loop = loop;
