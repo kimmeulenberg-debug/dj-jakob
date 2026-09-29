@@ -1049,20 +1049,40 @@ Queen - Bohemian Rhapsody</code>
 
         // Auto-detect: Exportify CSV of "Artiest - Liedje"
         const eersteRegel = regels[0].toLowerCase();
-        const isCSV = eersteRegel.startsWith('spotify:track:') ||
-                      eersteRegel.startsWith('"spotify:track:') ||
-                      eersteRegel.startsWith('track uri');
+        const heeftHeader = eersteRegel.startsWith('track uri') ||
+                            eersteRegel.startsWith('spotify id') ||
+                            eersteRegel.startsWith('"track uri') ||
+                            eersteRegel.startsWith('"spotify id');
+        const isCSV = heeftHeader ||
+                      eersteRegel.startsWith('spotify:track:') ||
+                      eersteRegel.startsWith('"spotify:track:');
 
         if (isCSV) {
-            regels.forEach((r, i) => {
-                if (r.toLowerCase().startsWith('track uri')) return; // sla header over
+            // Detecteer kolomindices uit header (werkt voor oude én nieuwe Exportify-versies)
+            let iUri = 0, iTitle = 1, iArtist = 3;
+            let startIndex = 0;
+            if (heeftHeader) {
+                const headerVelden = parseCSVRegel(regels[0]).map(v => v.toLowerCase().trim());
+                const colUri    = headerVelden.findIndex(v => v === 'track uri' || v === 'spotify id' || v === 'spotify uri');
+                const colTitle  = headerVelden.findIndex(v => v === 'track name' || v === 'name');
+                const colArtist = headerVelden.findIndex(v => v === 'artist name(s)' || v === 'artist names' || v === 'artist name' || v === 'artists');
+                if (colTitle  !== -1) iTitle  = colTitle;
+                if (colArtist !== -1) iArtist = colArtist;
+                if (colUri    !== -1) iUri    = colUri;
+                startIndex = 1; // sla headerregel over
+            }
+
+            regels.slice(startIndex).forEach((r, i) => {
                 const f = parseCSVRegel(r);
-                if (f.length < 4) { fouten.push(i + 1); return; }
-                const spotify_uri = f[0];
-                const title       = f[1];
-                const artist      = f[3].split(';')[0].trim();
+                if (f.length <= Math.max(iUri, iTitle, iArtist)) { fouten.push(i + 1 + startIndex); return; }
+                const raw_uri    = f[iUri]  || '';
+                const title      = f[iTitle] || '';
+                const artist     = (f[iArtist] || '').split(';')[0].trim();
+                // Bouw een geldige spotify:track: URI als de kolom alleen het track-ID bevat
+                const spotify_uri = raw_uri.startsWith('spotify:track:') ? raw_uri :
+                                    raw_uri.match(/^[A-Za-z0-9]{22}$/) ? `spotify:track:${raw_uri}` : '';
                 if (artist && title) nummers.push({ artist, title, spotify_uri });
-                else fouten.push(i + 1);
+                else fouten.push(i + 1 + startIndex);
             });
         } else {
             regels.forEach((r, i) => {
