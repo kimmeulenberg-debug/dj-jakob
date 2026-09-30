@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Spel — DJ Jakob</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; min-height: 100vh; }
+
+        :root {
+            --cyan:   #00D4FF;
+            --pink:   #FF0066;
+            --green:  #00E676;
+            --orange: #FF8C00;
+            --purple: #9B59FF;
+            --dark:   #0A0A1A;
+            --mid:    #12122A;
+            --card:   #16162E;
+            --white:  #FDFAF5;
+            --muted:  rgba(253,250,245,0.55);
+            --border: rgba(0,212,255,0.12);
+        }
+
+        /* ===================== PIN ===================== */
+        #pin-screen {
+            position: fixed; inset: 0; z-index: 999;
+            background: var(--dark);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .pin-logo {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 12px rgba(255,140,0,0.6)) drop-shadow(0 0 20px rgba(0,212,255,0.4));
+            margin-bottom: 20px;
+        }
+        .pin-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30px; letter-spacing: 0.06em; color: var(--cyan);
+        }
+        .pin-sub { font-size: 13px; color: var(--muted); margin-top: 6px; margin-bottom: 32px; }
+        .pin-dots { display: flex; gap: 14px; margin-bottom: 12px; }
+        .pin-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(0,212,255,0.4); background: transparent;
+            transition: background 150ms, border-color 150ms;
+        }
+        .pin-dot.filled { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,212,255,0.6); }
+        .pin-error { height: 18px; font-size: 12px; color: var(--pink); margin-bottom: 28px; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+        .numpad-btn {
+            height: 72px; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border); color: var(--white);
+            font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 600;
+            cursor: pointer; border-radius: 4px;
+            transition: background 150ms, border-color 150ms;
+        }
+        .numpad-btn:hover { background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3); }
+        .numpad-btn:active { background: rgba(0,212,255,0.15); }
+        .numpad-btn.del { font-size: 18px; color: var(--muted); }
+        .numpad-btn.empty { visibility: hidden; }
+
+        /* ===================== APP ===================== */
+        #app { display: none; flex-direction: column; min-height: 100vh; }
+
+        /* --- SOUNDBOARD STRIP --- */
+        .sb-strip {
+            background: rgba(22,22,46,0.98);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex; align-items: center; gap: 10px;
+            flex-wrap: wrap;
+            position: sticky; top: 0; z-index: 50;
+            backdrop-filter: blur(12px);
+        }
+        .sb-strip-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14px; letter-spacing: 0.08em;
+            color: var(--muted); margin-right: 4px; white-space: nowrap;
+        }
+        .sb-slot {
+            flex: 1; min-width: 100px; max-width: 200px;
+            height: 52px;
+            border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: var(--muted);
+            font-family: 'Inter', sans-serif; font-size: 11px;
+            cursor: pointer;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 2px;
+            transition: background 150ms, border-color 150ms, transform 100ms;
+            padding: 6px 8px; text-align: center; position: relative; overflow: hidden;
+        }
+        .sb-slot.filled {
+            border-color: var(--slot-color, var(--cyan));
+            background: rgba(var(--slot-rgb, 0,212,255), 0.08);
+            color: var(--white);
+        }
+        .sb-slot.filled:hover { background: rgba(var(--slot-rgb, 0,212,255), 0.16); }
+        .sb-slot.filled:active { transform: scale(0.95); }
+        .sb-slot.playing {
+            animation: slotPulse 1.4s ease-in-out infinite;
+            border-color: var(--slot-color, var(--cyan));
+        }
+        @keyframes slotPulse {
+            0%,100% { box-shadow: 0 0 10px rgba(var(--slot-rgb,0,212,255),0.35); }
+            50%      { box-shadow: 0 0 24px rgba(var(--slot-rgb,0,212,255),0.7); }
+        }
+        .sb-slot-name { font-size: 12px; font-weight: 600; line-height: 1.2; }
+        .sb-slot-meta { font-size: 10px; color: var(--muted); }
+        .sb-slot.playing .sb-slot-meta { color: var(--slot-color, var(--cyan)); }
+        .sb-stop {
+            height: 52px; padding: 0 16px;
+            background: rgba(255,0,102,0.1);
+            border: 1px solid rgba(255,0,102,0.35);
+            color: var(--pink); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+            transition: background 150ms;
+        }
+        .sb-stop:hover { background: rgba(255,0,102,0.2); }
+        .sb-stop:active { background: rgba(255,0,102,0.3); }
+        .btn-logout-top {
+            height: 52px; padding: 0 14px;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--muted); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px;
+            cursor: pointer; white-space: nowrap;
+            transition: color 150ms, border-color 150ms;
+        }
+        .btn-logout-top:hover { color: var(--white); border-color: rgba(0,212,255,0.3); }
+
+        /* ===================== BINGO MAIN ===================== */
+        .bingo-main {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; padding: 28px 20px 40px;
+            max-width: 680px; margin: 0 auto; width: 100%;
+        }
+
+        .bingo-header {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px; letter-spacing: 0.08em;
+            color: var(--cyan); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Status */
+        .bingo-status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--muted);
+            margin-bottom: 20px;
+        }
+        .session-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--muted); flex-shrink: 0;
+            transition: background 300ms;
+        }
+        .session-dot.active {
+            background: var(--green);
+            box-shadow: 0 0 6px rgba(0,230,118,0.7);
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%,100% { box-shadow: 0 0 4px rgba(0,230,118,0.5); }
+            50%      { box-shadow: 0 0 12px rgba(0,230,118,0.9); }
+        }
+
+        /* Draw display */
+        .draw-display {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 16px;
+            min-height: 160px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: border-color 400ms;
+        }
+        .draw-display.has-song { border-color: rgba(0,212,255,0.35); }
+        .draw-empty { color: var(--muted); font-size: 14px; }
+        .draw-num {
+            font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--cyan);
+            margin-bottom: 10px;
+        }
+        .draw-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(36px, 8vw, 60px);
+            letter-spacing: 0.04em; line-height: 1;
+            color: var(--white); margin-bottom: 8px;
+        }
+        .draw-artist {
+            font-size: 15px; color: var(--cyan); font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn-draw {
+            width: 100%; padding: 18px;
+            background: var(--cyan); color: #0A0A1A;
+            border: none; border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px; letter-spacing: 0.06em;
+            cursor: pointer; margin-bottom: 10px;
+            transition: opacity 200ms, transform 100ms;
+        }
+        .btn-draw:hover:not(:disabled) { opacity: 0.9; }
+        .btn-draw:active:not(:disabled) { transform: scale(0.98); }
+        .btn-draw:disabled { opacity: 0.35; cursor: default; }
+
+        .btn-nieuw-spel {
+            width: 100%; padding: 14px;
+            background: transparent; color: var(--muted);
+            border: 1px solid var(--border); border-radius: 8px;
+            font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+            cursor: pointer; margin-bottom: 20px;
+            transition: color 200ms, border-color 200ms;
+        }
+        .btn-nieuw-spel:hover { color: var(--white); border-color: rgba(0,212,255,0.3); }
+
+        /* Spotify */
+        .spotify-section {
+            width: 100%; margin-bottom: 20px;
+        }
+        .spotify-label {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 8px;
+        }
+        .btn-spotify-open {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 12px;
+            background: #1ED760; color: #000;
+            border-radius: 8px; text-decoration: none;
+            font-weight: 700; font-size: 14px;
+            margin-top: 8px;
+            transition: opacity 150ms;
+        }
+        .btn-spotify-open:hover { opacity: 0.88; }
+        .btn-spotify-search {
+            display: block; width: 100%; padding: 12px;
+            background: rgba(30,215,96,0.12); color: #1ED760;
+            border: 1px solid rgba(30,215,96,0.3); border-radius: 8px;
+            text-decoration: none; font-size: 14px; font-weight: 500;
+            text-align: center;
+        }
+
+        /* History */
+        .draw-history { width: 100%; }
+        .draw-history-label {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+        }
+        .draw-history-list { display: flex; flex-direction: column; gap: 4px; }
+        .draw-history-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 8px 12px;
+        }
+        .draw-seq {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px; color: var(--cyan); min-width: 24px;
+        }
+        .draw-h-title { font-size: 13px; font-weight: 600; }
+        .draw-h-artist { font-size: 11px; color: var(--muted); }
+    </style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pin-screen">
+    <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="pin-logo">
+    <p class="pin-title">Bingo Spel</p>
+    <p class="pin-sub">Voer je pincode in</p>
+    <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <p class="pin-error" id="pin-error"></p>
+    <div class="numpad">
+        <button class="numpad-btn" onclick="pinKey('1')">1</button>
+        <button class="numpad-btn" onclick="pinKey('2')">2</button>
+        <button class="numpad-btn" onclick="pinKey('3')">3</button>
+        <button class="numpad-btn" onclick="pinKey('4')">4</button>
+        <button class="numpad-btn" onclick="pinKey('5')">5</button>
+        <button class="numpad-btn" onclick="pinKey('6')">6</button>
+        <button class="numpad-btn" onclick="pinKey('7')">7</button>
+        <button class="numpad-btn" onclick="pinKey('8')">8</button>
+        <button class="numpad-btn" onclick="pinKey('9')">9</button>
+        <button class="numpad-btn empty"></button>
+        <button class="numpad-btn" onclick="pinKey('0')">0</button>
+        <button class="numpad-btn del" onclick="pinBack()">⌫</button>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+    <!-- SOUNDBOARD STRIP -->
+    <div class="sb-strip">
+        <span class="sb-strip-label">🔊 Geluid</span>
+        <div class="sb-slot" id="slot-1" onclick="toggleSlot(1)">
+            <span class="sb-slot-name">—</span>
+        </div>
+        <div class="sb-slot" id="slot-2" onclick="toggleSlot(2)">
+            <span class="sb-slot-name">—</span>
+        </div>
+        <div class="sb-slot" id="slot-3" onclick="toggleSlot(3)">
+            <span class="sb-slot-name">—</span>
+        </div>
+        <div class="sb-slot" id="slot-4" onclick="toggleSlot(4)">
+            <span class="sb-slot-name">—</span>
+        </div>
+        <div class="sb-slot" id="slot-5" onclick="toggleSlot(5)">
+            <span class="sb-slot-name">—</span>
+        </div>
+        <button class="sb-stop" onclick="stopAll()">■ Stop alles</button>
+        <button class="btn-logout-top" onclick="logout()">Uitloggen</button>
+    </div>
+
+    <!-- BINGO GAME -->
+    <div class="bingo-main">
+        <div class="bingo-header">🎱 Bingo Spel</div>
+
+        <div class="bingo-status">
+            <div class="session-dot" id="session-dot"></div>
+            <span id="session-status-text">Geen actief spel</span>
+        </div>
+
+        <div class="draw-display" id="draw-display">
+            <p class="draw-empty">Start een spel en trek het eerste nummer</p>
+        </div>
+
+        <button class="btn-draw" id="btn-draw" onclick="drawSong()" disabled>🎱 Trek volgend nummer</button>
+        <button class="btn-nieuw-spel" onclick="startSession()">↺ Nieuw spel starten</button>
+
+        <div class="spotify-section" id="spotify-section" style="display:none">
+            <p class="spotify-label">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#1ED760"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify
+            </p>
+            <div id="spotify-container"></div>
+        </div>
+
+        <div class="draw-history">
+            <p class="draw-history-label">Al getrokken</p>
+            <div class="draw-history-list" id="draw-history-list">
+                <p style="color:var(--muted);font-size:13px;padding:8px 0;">Nog niets getrokken</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const PIN          = '1976';
+const SUPABASE_URL = 'https://zweumhnigwyjfjuowzts.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mf8ehnNab6mTM6qjoGIAxw_QrCc40nZ';
+const BUCKET       = 'soundboard';
+const SB_SLOTS     = 5;
+const BTN_COLORS   = ['#00D4FF','#FF0066','#FF8C00','#9B59FF','#1ED760'];
+const BTN_RGB      = ['0,212,255','255,0,102','255,140,0','155,89,255','30,215,96'];
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===== PIN =====
+let pinBuffer = '';
+
+function pinKey(d) {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += d;
+    document.getElementById(`dot-${pinBuffer.length - 1}`).classList.add('filled');
+    if (pinBuffer.length === 4) {
+        setTimeout(() => {
+            if (pinBuffer === PIN) {
+                sessionStorage.setItem('dj-auth', 'ok');
+                document.getElementById('pin-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+                init();
+            } else {
+                pinBuffer = '';
+                document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
+                const err = document.getElementById('pin-error');
+                err.textContent = 'Onjuiste pincode';
+                setTimeout(() => err.textContent = '', 1500);
+            }
+        }, 120);
+    }
+}
+
+function pinBack() {
+    if (!pinBuffer.length) return;
+    pinBuffer = pinBuffer.slice(0, -1);
+    document.getElementById(`dot-${pinBuffer.length}`).classList.remove('filled');
+}
+
+function logout() {
+    sessionStorage.removeItem('dj-auth');
+    stopAll();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('pin-screen').style.display = 'flex';
+    pinBuffer = '';
+    document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
+}
+
+// ===== INIT =====
+async function init() {
+    await Promise.all([loadSoundboard(), loadBingo()]);
+}
+
+if (sessionStorage.getItem('dj-auth') === 'ok') {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    init();
+}
+
+// ===== SOUNDBOARD =====
+const sbState = {}; // slot → { audio, label, volume }
+
+async function loadSoundboard() {
+    const { data } = await db.from('soundboard_buttons')
+        .select('*').lte('slot', SB_SLOTS).order('slot');
+    if (!data) return;
+    data.forEach(row => {
+        const { data: { publicUrl } } = db.storage.from(BUCKET).getPublicUrl(row.file_path);
+        const audio = new Audio(publicUrl);
+        audio.volume = row.volume ?? 0.8;
+        audio.loop = row.loop ?? false;
+        audio.addEventListener('ended', () => setSlotPlaying(row.slot, false));
+        sbState[row.slot] = { audio, label: row.label, volume: row.volume ?? 0.8 };
+
+        const el = document.getElementById(`slot-${row.slot}`);
+        if (!el) return;
+        const idx = (row.slot - 1) % BTN_COLORS.length;
+        el.classList.add('filled');
+        el.style.setProperty('--slot-color', BTN_COLORS[idx]);
+        el.style.setProperty('--slot-rgb', BTN_RGB[idx]);
+        el.innerHTML = `<span class="sb-slot-name">${escHtml(row.label)}</span>`;
+    });
+}
+
+function toggleSlot(slot) {
+    const s = sbState[slot];
+    if (!s) return;
+    if (!s.audio.paused) {
+        s.audio.pause();
+        s.audio.currentTime = 0;
+        setSlotPlaying(slot, false);
+    } else {
+        s.audio.play().catch(() => {});
+        setSlotPlaying(slot, true);
+    }
+}
+
+function setSlotPlaying(slot, playing) {
+    const el = document.getElementById(`slot-${slot}`);
+    if (!el) return;
+    el.classList.toggle('playing', playing);
+    const s = sbState[slot];
+    if (s) {
+        const idx = (slot - 1) % BTN_COLORS.length;
+        el.innerHTML = playing
+            ? `<span class="sb-slot-name">${escHtml(s.label)}</span><span class="sb-slot-meta">▶ speelt</span>`
+            : `<span class="sb-slot-name">${escHtml(s.label)}</span>`;
+    }
+}
+
+function stopAll() {
+    Object.entries(sbState).forEach(([slot, s]) => {
+        if (!s.audio.paused) {
+            s.audio.pause();
+            s.audio.currentTime = 0;
+            setSlotPlaying(Number(slot), false);
+        }
+    });
+}
+
+// ===== BINGO =====
+let bingoSongs    = [];
+let activeSessie  = null;
+let drawnSongs    = [];
+let isDrawing     = false;
+
+async function loadBingo() {
+    const [songsRes, sessieRes] = await Promise.all([
+        db.from('bingo_songs').select('*').order('title'),
+        db.from('bingo_sessions').select('*').eq('active', true).maybeSingle()
+    ]);
+    bingoSongs   = songsRes.data  || [];
+    activeSessie = sessieRes.data || null;
+
+    if (activeSessie) {
+        const { data } = await db.from('bingo_draws')
+            .select('*, bingo_songs(*)')
+            .eq('session_id', activeSessie.id)
+            .order('sequence');
+        drawnSongs = data || [];
+    }
+    renderGameState();
+    subscribeRealtime();
+}
+
+function subscribeRealtime() {
+    db.channel('bingo-bingo-page')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_draws' }, payload => {
+            if (!activeSessie || payload.new.session_id !== activeSessie.id) return;
+            if (payload.eventType === 'INSERT') {
+                const song = bingoSongs.find(s => s.id === payload.new.song_id);
+                if (song && !drawnSongs.find(d => d.id === payload.new.id)) {
+                    drawnSongs.push({ ...payload.new, bingo_songs: song });
+                    renderGameState();
+                }
+            }
+        })
+        .subscribe();
+}
+
+async function startSession() {
+    if (activeSessie) {
+        if (!confirm('Nieuw spel starten? De trek-geschiedenis wordt gewist voor spelers.')) return;
+        await db.from('bingo_sessions').update({ active: false }).eq('id', activeSessie.id);
+    }
+    const { data } = await db.from('bingo_sessions').insert({ active: true }).select().single();
+    activeSessie = data;
+    drawnSongs   = [];
+    renderGameState();
+}
+
+async function drawSong() {
+    if (isDrawing) return;
+    isDrawing = true;
+    document.getElementById('btn-draw').disabled = true;
+    try {
+        if (!activeSessie) { await startSession(); return; }
+        const drawnIds = drawnSongs.map(d => d.song_id);
+        const pool     = bingoSongs.filter(s => !drawnIds.includes(s.id));
+        if (pool.length === 0) { alert('Alle nummers zijn getrokken! Start een nieuw spel.'); return; }
+        const song = pool[Math.floor(Math.random() * pool.length)];
+        const seq  = drawnSongs.length + 1;
+        const { data, error } = await db.from('bingo_draws').insert({
+            session_id: activeSessie.id, song_id: song.id, sequence: seq
+        }).select().single();
+        if (error) { console.error(error); return; }
+        if (!drawnSongs.find(d => d.id === data.id)) {
+            drawnSongs.push({ ...data, bingo_songs: song });
+        }
+        renderGameState();
+    } finally {
+        isDrawing = false;
+        const remaining = bingoSongs.length - drawnSongs.length;
+        document.getElementById('btn-draw').disabled = !activeSessie || remaining === 0;
+    }
+}
+
+function renderGameState() {
+    const dot     = document.getElementById('session-dot');
+    const status  = document.getElementById('session-status-text');
+    const display = document.getElementById('draw-display');
+    const history = document.getElementById('draw-history-list');
+    const btnDraw = document.getElementById('btn-draw');
+
+    if (activeSessie) {
+        dot.classList.add('active');
+        const remaining = bingoSongs.length - drawnSongs.length;
+        status.textContent = `Actief spel — ${drawnSongs.length} getrokken · ${remaining} resterend`;
+        btnDraw.disabled = remaining === 0;
+    } else {
+        dot.classList.remove('active');
+        status.textContent = 'Geen actief spel — druk op "Nieuw spel starten"';
+        btnDraw.disabled = true;
+    }
+
+    if (drawnSongs.length > 0) {
+        const last = drawnSongs[drawnSongs.length - 1];
+        const song = last.bingo_songs;
+        display.classList.add('has-song');
+        display.innerHTML = `
+            <p class="draw-num">Nummer ${last.sequence}</p>
+            <p class="draw-title">${escHtml(song.title)}</p>
+            <p class="draw-artist">${escHtml(song.artist)}</p>`;
+
+        const spotifySection   = document.getElementById('spotify-section');
+        const spotifyContainer = document.getElementById('spotify-container');
+        spotifySection.style.display = 'block';
+        if (song.spotify_uri && song.spotify_uri.startsWith('spotify:track:')) {
+            const trackId = song.spotify_uri.split(':')[2];
+            spotifyContainer.innerHTML = `
+                <iframe src="https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0"
+                    width="100%" height="80" frameborder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy" style="border-radius:8px;display:block;"></iframe>
+                <a class="btn-spotify-open" href="https://open.spotify.com/track/${trackId}" target="_blank" rel="noopener">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 0 1-.277-1.215c3.809-.87 7.076-.496 9.712 1.115a.623.623 0 0 1 .207.857zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.973-.519.781.781 0 0 1 .52-.973c3.632-1.102 8.147-.568 11.233 1.329a.78.78 0 0 1 .257 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.937.937 0 1 1-.543-1.794c3.532-1.073 9.404-.866 13.115 1.338a.937.937 0 0 1-.955 1.613z"/></svg>
+                    Openen in Spotify
+                </a>`;
+        } else {
+            const q = encodeURIComponent((song.artist || '') + ' ' + (song.title || ''));
+            spotifyContainer.innerHTML = `<a class="btn-spotify-search"
+                href="https://open.spotify.com/search/${q}" target="_blank">🔍 Zoek op Spotify</a>`;
+        }
+    } else {
+        display.classList.remove('has-song');
+        display.innerHTML = '<p class="draw-empty">Start een spel en trek het eerste nummer</p>';
+        document.getElementById('spotify-section').style.display = 'none';
+    }
+
+    const sorted = [...drawnSongs].reverse();
+    history.innerHTML = sorted.map(d => `
+        <div class="draw-history-item">
+            <span class="draw-seq">${d.sequence}</span>
+            <div>
+                <div class="draw-h-title">${escHtml(d.bingo_songs.title)}</div>
+                <div class="draw-h-artist">${escHtml(d.bingo_songs.artist)}</div>
+            </div>
+        </div>`).join('') || '<p style="color:var(--muted);font-size:13px;padding:8px 0;">Nog niets getrokken</p>';
+}
+
+function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
