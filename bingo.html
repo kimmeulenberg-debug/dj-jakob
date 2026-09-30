@@ -9,7 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #0A0A1A; color: #FDFAF5; min-height: 100vh; }
+        body {
+            font-family: 'Inter', sans-serif; color: #FDFAF5; min-height: 100vh;
+            background: #0A0A1A url('./bingo-bg.webp') center center / cover no-repeat fixed;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background: rgba(6, 4, 20, 0.72);
+            backdrop-filter: blur(1px);
+        }
+        #pin-screen, #app { position: relative; z-index: 1; }
 
         :root {
             --cyan:   #00D4FF;
