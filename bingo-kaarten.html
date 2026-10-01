@@ -203,6 +203,13 @@
             content: '★';
             font-size: 20px; color: #FF0066;
         }
+        .card-cell.free.mict-free {
+            background: #e8f6f6;
+        }
+        .card-cell.free.mict-free::after { content: none; }
+        .card-cell.free.mict-free img {
+            width: 70%; max-width: 54px; height: auto; display: block;
+        }
         .cc-artist {
             font-size: 6px; color: #888;
             letter-spacing: 0.04em; text-transform: uppercase;
@@ -377,6 +384,13 @@
 
     <div class="controls-bar">
         <div class="ctrl-group">
+            <label class="ctrl-label" for="sjabloon-select">Sjabloon</label>
+            <select class="ctrl-select" id="sjabloon-select">
+                <option value="djjakob">DJ Jakob</option>
+                <option value="mict">MICT</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
             <label class="ctrl-label" for="aantal-select">Aantal kaarten</label>
             <select class="ctrl-select" id="aantal-select">
                 <option value="4">4 kaarten</option>
@@ -496,18 +510,18 @@
     }
 
     function genereerKaarten() {
-        const aantal = parseInt(document.getElementById('aantal-select').value, 10);
-        const grid   = document.getElementById('preview-grid');
-        const label  = document.getElementById('preview-label');
+        const aantal    = parseInt(document.getElementById('aantal-select').value, 10);
+        const sjabloon  = document.getElementById('sjabloon-select').value;
+        const grid      = document.getElementById('preview-grid');
+        const label     = document.getElementById('preview-label');
 
         grid.innerHTML = '';
         label.textContent = `${aantal} unieke kaarten — voorbeeld`;
 
-        // Groepeer kaarten per 2 in een page-quad wrapper (2 per A4-pagina)
         for (let k = 1; k <= aantal; k += 2) {
             let cards = '';
             for (let i = k; i < k + 2 && i <= aantal; i++) {
-                cards += renderKaart(maakKaart(), i);
+                cards += renderKaart(maakKaart(), i, sjabloon);
             }
             grid.insertAdjacentHTML('beforeend', `<div class="page-quad">${cards}</div>`);
         }
@@ -515,9 +529,15 @@
         document.getElementById('btn-print').disabled = false;
     }
 
-    function renderKaart(card, num) {
+    function renderKaart(card, num, sjabloon = 'djjakob') {
+        const isMict = sjabloon === 'mict';
+
         const cells = card.map((song, i) => {
-            if (i === FREE_INDEX) return `<div class="card-cell free"></div>`;
+            if (i === FREE_INDEX) {
+                return isMict
+                    ? `<div class="card-cell free mict-free"><img src="./mict-logo.png" alt="MICT"></div>`
+                    : `<div class="card-cell free"></div>`;
+            }
             return `
                 <div class="card-cell">
                     <span class="cc-artist">${escHtml(song.artist)}</span>
@@ -525,13 +545,23 @@
                 </div>`;
         }).join('');
 
+        const header = isMict
+            ? `<img src="./mict-logo.png" alt="MICT" class="card-logo">
+               <span class="card-brand-name" style="color:#007e8a;">MICT Muziekbingo</span>
+               <span class="card-num">Kaart #${num}</span>`
+            : `<img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="card-logo">
+               <span class="card-brand-name">DJ Jakob</span>
+               <span class="card-num">Kaart #${num}</span>`;
+
+        const footer = isMict
+            ? `<span class="card-footer-url">djjakob.nl/muziekbingo</span>
+               <span class="card-footer-kaart">MICT — Kaart ${num}</span>`
+            : `<span class="card-footer-url">djjakob.nl/muziekbingo</span>
+               <span class="card-footer-kaart">Kaart ${num}</span>`;
+
         return `
         <div class="bingo-card">
-            <div class="card-header">
-                <img src="./dj-jakob-logo-new.PNG" alt="DJ Jakob" class="card-logo">
-                <span class="card-brand-name">DJ Jakob</span>
-                <span class="card-num">Kaart #${num}</span>
-            </div>
+            <div class="card-header">${header}</div>
             <div class="bingo-letters">
                 <div class="bl">B</div>
                 <div class="bl">I</div>
@@ -540,10 +570,7 @@
                 <div class="bl">O</div>
             </div>
             <div class="card-grid">${cells}</div>
-            <div class="card-footer">
-                <span class="card-footer-url">djjakob.nl/muziekbingo</span>
-                <span class="card-footer-kaart">Kaart ${num}</span>
-            </div>
+            <div class="card-footer">${footer}</div>
         </div>`;
     }
 
